@@ -1,1230 +1,1412 @@
 <!DOCTYPE html>
-<html lang="th" class="h-full bg-orange-50/50">
+<html lang="th">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PetCare Hub - ระบบทะเบียนสัตว์เลี้ยงและประวัติวัคซีน ตำบลห้วยยาบ</title>
-    <!-- Tailwind CSS CDN -->
+    <title>HuaiyapPetCare Hub - ระบบทะเบียนและวัคซีนสัตว์เลี้ยง อบต.ห้วยยาบ</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts (Prompt & Nunito) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: {
-                        sans: ['Prompt', 'Nunito', 'sans-serif'],
-                    },
                     colors: {
                         peach: {
-                            50: '#fff7ed',
-                            100: '#ffedd5',
-                            200: '#fed7aa',
-                            400: '#fb923c',
+                            50: '#fff8f6',
+                            100: '#ffeee8',
+                            200: '#ffdcd0',
                             500: '#f97316',
                             600: '#ea580c',
+                            DEFAULT: '#ff7e5f',
                         },
                         tealish: {
                             50: '#f0fdfa',
                             100: '#ccfbf1',
-                            400: '#2dd4bf',
                             500: '#14b8a6',
                             600: '#0d9488',
                             700: '#0f766e',
+                            DEFAULT: '#00b4d8',
                         }
+                    },
+                    fontFamily: {
+                        sans: ['Prompt', 'Kanit', 'sans-serif'],
                     }
                 }
             }
         }
     </script>
-
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- QR Code Generator JS library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        .custom-card-shadow {
-            box-shadow: 0 10px 25px -5px rgba(249, 115, 22, 0.08), 0 8px 10px -6px rgba(20, 184, 166, 0.06);
+        body { font-family: 'Prompt', sans-serif; }
+        .gradient-bg {
+            background: linear-gradient(135deg, #ff7e5f 0%, #feb47b 50%, #00b4d8 100%);
         }
-        .custom-card-shadow:hover {
-            box-shadow: 0 20px 30px -10px rgba(249, 115, 22, 0.15), 0 10px 15px -5px rgba(20, 184, 166, 0.1);
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
         }
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
         }
-        ::-webkit-scrollbar-track {
-            background: #fff7ed;
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #0d9488;
+            border-radius: 10px;
         }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 9999px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #f97316;
+        @media print {
+            body * { visibility: hidden; }
+            #digitalIdModalContent, #digitalIdModalContent * { visibility: visible; }
+            #digitalIdModalContent { position: absolute; left: 0; top: 0; width: 100%; }
+            .no-print { display: none !important; }
         }
     </style>
 </head>
-<body class="h-full font-sans text-slate-700 antialiased flex flex-col selection:bg-peach-200 selection:text-peach-600">
+<body class="bg-slate-50 min-h-screen flex flex-col text-slate-800">
 
-    <!-- Top Navigation Header -->
-    <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-orange-100/80 shadow-sm">
+    <!-- ADMIN STATUS BANNER (Visible when Admin is logged in) -->
+    <div id="adminActiveBanner" class="hidden bg-slate-900 text-amber-300 px-4 py-2 text-xs font-semibold flex items-center justify-between border-b border-amber-500/30 sticky top-0 z-50 shadow-md">
+        <div class="flex items-center space-x-2 max-w-7xl mx-auto w-full justify-between">
+            <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <i class="fa-solid fa-user-shield text-amber-400"></i>
+                <span>โหมดเจ้าหน้าที่ อบต.ห้วยยาบ (Admin Mode Activated) — คุณสามารถจัดการข้อมูลสัตว์เลี้ยงทุกตัวในระบบได้</span>
+            </div>
+            <button onclick="logoutAdmin()" class="bg-amber-500/20 hover:bg-amber-500/40 text-amber-200 border border-amber-400/40 px-3 py-1 rounded-lg transition text-[11px]">
+                <i class="fa-solid fa-right-from-bracket mr-1"></i> ออกจากระบบแอดมิน
+            </button>
+        </div>
+    </div>
+
+    <!-- NAVIGATION HEADER -->
+    <header class="bg-white/95 backdrop-blur-md shadow-md sticky top-0 z-40 border-b border-orange-100">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-20">
-                <!-- Logo & App Title -->
-                <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-peach-500 to-amber-400 flex items-center justify-center text-white shadow-lg shadow-peach-500/30 transform hover:rotate-6 transition-transform">
-                        <i class="fa-solid fa-paw text-2xl"></i>
+                <!-- Logo & Title -->
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="resetToHome()">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-teal-500 flex items-center justify-center text-white text-2xl shadow-lg shadow-orange-200">
+                        <i class="fa-solid fa-paw"></i>
                     </div>
                     <div>
-                        <h1 class="text-xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
-                            PetCare <span class="text-xs px-2.5 py-0.5 rounded-full bg-tealish-100 text-tealish-700 font-semibold">ตำบลห้วยยาบ</span>
-                        </h1>
-                        <p class="text-xs text-slate-500">ระบบทะเบียนสัตว์เลี้ยงและประวัติวัคซีน (16 หมู่บ้าน)</p>
+                        <div class="flex items-center space-x-2">
+                            <h1 class="text-xl font-bold bg-gradient-to-r from-amber-600 to-teal-600 bg-clip-text text-transparent">
+                                HuaiyapPetCare Hub
+                            </h1>
+                            <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium hidden sm:inline-block">อบต.ห้วยยาบ</span>
+                        </div>
+                        <p class="text-xs text-slate-500">ระบบทะเบียนสัตว์เลี้ยงและประวัติวัคซีนพิษสุนัขบ้า 16 หมู่บ้าน</p>
                     </div>
                 </div>
 
-                <!-- Action Controls -->
-                <div class="flex items-center gap-2 sm:gap-3">
-                    <!-- Village Summary Stats Toggle Button -->
-                    <button onclick="toggleVillageDrawer()" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium bg-tealish-50 hover:bg-tealish-100 text-tealish-700 transition-all flex items-center gap-2 border border-tealish-200/60">
-                        <i class="fa-solid fa-chart-pie text-tealish-600"></i>
-                        <span class="hidden md:inline">สถิติรายหมู่บ้าน</span>
+                <!-- Desktop Actions -->
+                <div class="hidden lg:flex items-center space-x-2">
+                    <button onclick="resetToHome()" class="px-3.5 py-2 rounded-xl text-slate-600 hover:text-amber-600 hover:bg-orange-50 font-medium transition text-xs flex items-center gap-1.5">
+                        <i class="fa-solid fa-house"></i> หน้าหลัก
                     </button>
-
-                    <!-- Config Sheet Button -->
-                    <button onclick="openConfigModal()" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium bg-orange-50 hover:bg-orange-100 text-peach-600 transition-all flex items-center gap-2 border border-orange-200/60">
-                        <i class="fa-solid fa-file-csv text-peach-500"></i>
-                        <span class="hidden md:inline">ตั้งค่า Google Sheet</span>
+                    <button onclick="openModal('statsModal')" class="px-3.5 py-2 rounded-xl text-slate-600 hover:text-teal-600 hover:bg-teal-50 font-medium transition text-xs flex items-center gap-1.5">
+                        <i class="fa-solid fa-chart-pie"></i> สถิติ 16 หมู่
                     </button>
+                    <button onclick="openModal('googleSheetHelpModal')" class="px-3.5 py-2 rounded-xl text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 font-medium transition text-xs flex items-center gap-1.5">
+                        <i class="fa-solid fa-file-excel"></i> API/Sheets
+                    </button>
+                    <button onclick="openModal('registerModal')" class="px-3.5 py-2 rounded-xl bg-teal-500 text-white font-medium hover:bg-teal-600 transition shadow-md shadow-teal-200 text-xs flex items-center gap-1.5">
+                        <i class="fa-solid fa-plus-circle"></i> + ลงทะเบียน
+                    </button>
+                    <button onclick="openModal('ownerLoginModal')" id="nav-owner-btn" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-medium hover:from-amber-600 hover:to-orange-600 transition shadow-md shadow-amber-200 text-xs flex items-center gap-1.5">
+                        <i class="fa-solid fa-user"></i> เจ้าของสัตว์เลี้ยง
+                    </button>
+                    <button onclick="openAdminLoginModal()" id="nav-admin-btn" class="px-3.5 py-2 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-800 hover:text-white transition text-xs flex items-center gap-1.5 font-medium">
+                        <i class="fa-solid fa-user-shield text-amber-500"></i> แอดมิน
+                    </button>
+                </div>
 
-                    <!-- Add Pet Button -->
-                    <button onclick="openPetModal()" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-gradient-to-r from-peach-500 to-amber-500 hover:from-peach-600 hover:to-amber-600 text-white shadow-md shadow-peach-500/20 active:scale-95 transition-all flex items-center gap-2">
-                        <i class="fa-solid fa-plus text-sm"></i>
-                        <span>ลงทะเบียนสัตว์เลี้ยง</span>
+                <!-- Mobile Menu Button -->
+                <div class="lg:hidden flex items-center gap-2">
+                    <button onclick="toggleMobileMenu()" class="p-2 text-slate-600 hover:text-amber-600 focus:outline-none">
+                        <i class="fa-solid fa-bars text-2xl"></i>
                     </button>
                 </div>
             </div>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div id="mobileMenu" class="hidden lg:hidden border-t border-slate-100 bg-white px-4 pt-2 pb-4 space-y-2 shadow-lg text-xs">
+            <button onclick="resetToHome(); toggleMobileMenu();" class="w-full text-left px-4 py-2.5 rounded-xl text-slate-700 hover:bg-orange-50 flex items-center gap-3">
+                <i class="fa-solid fa-house text-amber-500"></i> หน้าหลัก
+            </button>
+            <button onclick="openModal('statsModal'); toggleMobileMenu();" class="w-full text-left px-4 py-2.5 rounded-xl text-slate-700 hover:bg-teal-50 flex items-center gap-3">
+                <i class="fa-solid fa-chart-pie text-teal-500"></i> สถิติ 16 หมู่บ้าน
+            </button>
+            <button onclick="openModal('googleSheetHelpModal'); toggleMobileMenu();" class="w-full text-left px-4 py-2.5 rounded-xl text-slate-700 hover:bg-emerald-50 flex items-center gap-3">
+                <i class="fa-solid fa-file-excel text-emerald-500"></i> API / Google Sheets Sync
+            </button>
+            <button onclick="openModal('registerModal'); toggleMobileMenu();" class="w-full text-left px-4 py-2.5 rounded-xl bg-teal-500 text-white font-medium flex items-center gap-3 shadow-sm">
+                <i class="fa-solid fa-plus-circle"></i> + ลงทะเบียนสัตว์เลี้ยงใหม่
+            </button>
+            <button onclick="openModal('ownerLoginModal'); toggleMobileMenu();" class="w-full text-left px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-medium flex items-center gap-3 shadow-sm">
+                <i class="fa-solid fa-user"></i> เข้าสู่ระบบเจ้าของ (Owner Portal)
+            </button>
+            <button onclick="openAdminLoginModal(); toggleMobileMenu();" class="w-full text-left px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-medium flex items-center gap-3">
+                <i class="fa-solid fa-user-shield text-amber-500"></i> เข้าสู่ระบบแอดมิน อบต.
+            </button>
         </div>
     </header>
 
-    <!-- Main Content Area -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <!-- HERO BANNER -->
+    <section class="gradient-bg text-white py-8 px-4 sm:px-6 mb-8 shadow-inner">
+        <div class="max-w-7xl mx-auto text-center relative z-10">
+            <span class="inline-block bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider mb-2">
+                <i class="fa-solid fa-shield-cat mr-1"></i> โครงการสัตว์ปลอดโรค คนปลอดภัย จากโรคพิษสุนัขบ้า อบต.ห้วยยาบ
+            </span>
+            <h2 class="text-2xl sm:text-4xl font-extrabold tracking-tight mb-2">
+                ระบบทะเบียนสัตว์เลี้ยง & Digital Pet ID
+            </h2>
+            <p class="text-orange-50 max-w-2xl mx-auto text-xs sm:text-sm font-light">
+                ลงทะเบียนเพื่อรับบัตรประจำตัวดิจิทัลพร้อม QR Code ติดปลอกคอ เจ้าของสามารถใส่อัปโหลดรูปสัตว์เลี้ยง แก้ไข และลบข้อมูลของตนเองได้สะดวก
+            </p>
+        </div>
+    </section>
 
-        <!-- Status & Mode Banner -->
-        <div id="status-banner" class="bg-white rounded-2xl p-4 border border-orange-100 custom-card-shadow flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div class="flex items-center gap-3">
-                <span class="relative flex h-3 w-3">
-                  <span id="status-ping" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                  <span id="status-dot" class="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
-                </span>
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 flex-grow w-full">
+
+        <!-- OWNER PORTAL BANNER (If Logged In) -->
+        <div id="ownerLoggedBanner" class="hidden mb-6 bg-gradient-to-r from-teal-600 to-emerald-600 rounded-2xl p-4 text-white shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center text-2xl">
+                    <i class="fa-solid fa-user-check"></i>
+                </div>
                 <div>
-                    <span id="current-mode-badge" class="text-xs font-bold uppercase tracking-wider text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
-                        โหมดข้อมูลตัวอย่าง (Mock Data)
-                    </span>
-                    <p id="data-source-desc" class="text-xs text-slate-500 mt-1">กำลังแสดงข้อมูลการสำรวจในพื้นที่ 16 หมู่บ้าน ตำบลห้วยยาบ</p>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs bg-emerald-400/30 text-emerald-100 px-2 py-0.5 rounded-full font-medium">Owner Portal Active</span>
+                        <h3 class="font-bold text-lg" id="ownerWelcomeName">ยินดีต้อนรับ คุณ...</h3>
+                    </div>
+                    <p class="text-xs text-emerald-100" id="ownerWelcomePhone">เบอร์โทรศัพท์: -</p>
+                    <p class="text-[11px] text-emerald-200 mt-0.5"><i class="fa-solid fa-info-circle mr-1"></i> คุณสามารถจัดการ (แก้ไข / ลบ / ใส่อัปโหลดรูปภาพ) สัตว์เลี้ยงของตนเองได้แล้ว</p>
                 </div>
             </div>
-            <div class="flex items-center gap-3 self-end sm:self-auto">
-                <button onclick="fetchData()" class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 flex items-center gap-1.5 border border-slate-200 transition-all">
-                    <i id="refresh-icon" class="fa-solid fa-rotate-right text-slate-400"></i>
-                    <span>รีเฟรชข้อมูล</span>
+            <div class="flex items-center gap-2">
+                <button onclick="openModal('registerModal')" class="bg-white text-teal-700 px-3 py-1.5 rounded-xl text-xs font-semibold hover:bg-teal-50 transition shadow-sm">
+                    <i class="fa-solid fa-plus mr-1"></i> ลงทะเบียนเพิ่ม
                 </button>
-                <span class="text-xs text-slate-400">อัปเดตล่าสุด: <span id="last-updated-time">--:--</span></span>
+                <button onclick="logoutOwner()" class="bg-red-500/30 hover:bg-red-500/50 text-white px-3 py-1.5 rounded-xl text-xs transition border border-white/20">
+                    <i class="fa-solid fa-right-from-bracket mr-1"></i> ออกจากระบบ
+                </button>
             </div>
         </div>
 
-        <!-- Collapsible Village Statistics Drawer -->
-        <div id="village-summary-drawer" class="hidden bg-white rounded-3xl p-6 border border-tealish-100 custom-card-shadow space-y-4 transition-all">
-            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-map-location-dot text-tealish-600"></i>
-                    <h3 class="font-bold text-slate-800 text-sm sm:text-base">สรุปจำนวนสัตว์เลี้ยงแยกตาม 16 หมู่บ้าน ในตำบลห้วยยาบ</h3>
-                </div>
-                <button onclick="toggleVillageDrawer()" class="text-xs text-slate-400 hover:text-slate-600">
-                    <i class="fa-solid fa-xmark text-base"></i>
-                </button>
-            </div>
-            <div id="village-stats-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-3">
-                <!-- Dynamically populated via JS -->
-            </div>
-        </div>
-
-        <!-- Summary Widgets Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            <!-- Widget 1: Total Pets -->
-            <div class="bg-white rounded-2xl p-5 border border-orange-100 custom-card-shadow flex items-center justify-between relative overflow-hidden group">
-                <div class="z-10">
-                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">สัตว์เลี้ยงทั้งหมดในตำบล</p>
-                    <div class="flex items-baseline gap-2 mt-1">
-                        <h3 id="stat-total-pets" class="text-3xl font-extrabold text-slate-800">0</h3>
-                        <span class="text-xs text-slate-500">(ตัว)</span>
-                    </div>
-                    <div class="flex gap-2 text-xs mt-2 font-medium">
-                        <span class="text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md"><i class="fa-solid fa-dog"></i> <span id="stat-dogs">0</span></span>
-                        <span class="text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md"><i class="fa-solid fa-cat"></i> <span id="stat-cats">0</span></span>
-                    </div>
-                </div>
-                <div class="w-14 h-14 rounded-2xl bg-orange-100/60 text-peach-500 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+        <!-- SUMMARY STATS WIDGETS -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center space-x-3">
+                <div class="w-11 h-11 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center text-xl">
                     <i class="fa-solid fa-paw"></i>
                 </div>
-            </div>
-
-            <!-- Widget 2: Fully Vaccinated -->
-            <div class="bg-white rounded-2xl p-5 border border-orange-100 custom-card-shadow flex items-center justify-between relative overflow-hidden group">
-                <div class="z-10">
-                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">ฉีดวัคซีนครบแล้ว</p>
-                    <div class="flex items-baseline gap-2 mt-1">
-                        <h3 id="stat-vaccinated" class="text-3xl font-extrabold text-tealish-600">0</h3>
-                        <span class="text-xs text-slate-500">(ตัว)</span>
-                    </div>
-                    <p class="text-xs text-tealish-600 mt-2 font-medium flex items-center gap-1">
-                        <i class="fa-solid fa-circle-check"></i> ประวัติตามกำหนด
-                    </p>
-                </div>
-                <div class="w-14 h-14 rounded-2xl bg-tealish-100/60 text-tealish-600 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
-                    <i class="fa-solid fa-syringe"></i>
+                <div>
+                    <div class="text-xs text-slate-400">สัตว์เลี้ยงทั้งหมด</div>
+                    <div id="widgetTotalPets" class="text-xl font-bold text-slate-800">0</div>
                 </div>
             </div>
-
-            <!-- Widget 3: Upcoming Vaccine -->
-            <div class="bg-white rounded-2xl p-5 border border-orange-100 custom-card-shadow flex items-center justify-between relative overflow-hidden group">
-                <div class="z-10">
-                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">ถึงกำหนดเร็วๆ นี้</p>
-                    <div class="flex items-baseline gap-2 mt-1">
-                        <h3 id="stat-upcoming" class="text-3xl font-extrabold text-amber-500">0</h3>
-                        <span class="text-xs text-slate-500">(ภายใน 30 วัน)</span>
-                    </div>
-                    <p class="text-xs text-amber-600 mt-2 font-medium flex items-center gap-1">
-                        <i class="fa-solid fa-bell"></i> ควรเตรียมใกล้นัด
-                    </p>
+            <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center space-x-3">
+                <div class="w-11 h-11 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-circle-check"></i>
                 </div>
-                <div class="w-14 h-14 rounded-2xl bg-amber-100/60 text-amber-500 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
-                    <i class="fa-solid fa-calendar-day"></i>
+                <div>
+                    <div class="text-xs text-slate-400">ฉีดครบถ้วน</div>
+                    <div id="widgetUpToDate" class="text-xl font-bold text-emerald-600">0</div>
                 </div>
             </div>
-
-            <!-- Widget 4: Overdue Vaccine -->
-            <div class="bg-white rounded-2xl p-5 border border-orange-100 custom-card-shadow flex items-center justify-between relative overflow-hidden group">
-                <div class="z-10">
-                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">เลยกำหนดฉีดวัคซีน</p>
-                    <div class="flex items-baseline gap-2 mt-1">
-                        <h3 id="stat-overdue" class="text-3xl font-extrabold text-rose-500">0</h3>
-                        <span class="text-xs text-slate-500">(ตัว)</span>
-                    </div>
-                    <p class="text-xs text-rose-500 mt-2 font-medium flex items-center gap-1">
-                        <i class="fa-solid fa-triangle-exclamation"></i> ติดต่อเจ้าของด่วน
-                    </p>
+            <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center space-x-3">
+                <div class="w-11 h-11 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-clock"></i>
                 </div>
-                <div class="w-14 h-14 rounded-2xl bg-rose-100/60 text-rose-500 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
-                    <i class="fa-solid fa-clock-rotate-left"></i>
+                <div>
+                    <div class="text-xs text-slate-400">ใกล้นัดฉีด</div>
+                    <div id="widgetDueSoon" class="text-xl font-bold text-amber-600">0</div>
+                </div>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center space-x-3">
+                <div class="w-11 h-11 bg-red-100 text-red-600 rounded-xl flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <div>
+                    <div class="text-xs text-slate-400">เลยกำหนดฉีด</div>
+                    <div id="widgetOverdue" class="text-xl font-bold text-red-600">0</div>
                 </div>
             </div>
         </div>
 
-        <!-- Controls Bar: Search & Filter -->
-        <div class="bg-white rounded-2xl p-5 border border-orange-100 custom-card-shadow space-y-4">
-            <div class="flex flex-col lg:flex-row gap-4 items-center justify-between">
-                
+        <!-- SEARCH AND FILTER BAR -->
+        <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-100 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
                 <!-- Search Box -->
-                <div class="relative w-full lg:w-80">
-                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                    <input type="text" id="search-input" oninput="handleSearchAndFilter()" placeholder="ค้นหาชื่อสัตว์เลี้ยง, เจ้าของ, เบอร์โทร..." class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-4 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-peach-400 focus:bg-white transition-all">
+                <div class="md:col-span-5 relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                    <input type="text" id="searchInput" oninput="filterPets()" placeholder="ค้นหาชื่อสัตว์เลี้ยง, เจ้าของ, เบอร์โทร..." class="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500 text-xs sm:text-sm">
                 </div>
 
-                <!-- Filters Group -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full lg:w-auto">
-                    <!-- Pet Type Filter -->
-                    <select id="filter-type" onchange="handleSearchAndFilter()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-peach-400 focus:bg-white transition-all cursor-pointer">
-                        <option value="ALL">ประเภททั้งหมด</option>
-                        <option value="หมา">🐶 หมา (Dog)</option>
-                        <option value="แมว">🐱 แมว (Cat)</option>
+                <!-- Filter Village -->
+                <div class="md:col-span-3">
+                    <select id="villageFilter" onchange="filterPets()" class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500 text-xs sm:text-sm bg-white">
+                        <option value="">ทุกหมู่บ้าน (ม.1 - ม.16)</option>
                     </select>
+                </div>
 
-                    <!-- Village/Area Filter (16 Villages of Huai Yap) -->
-                    <select id="filter-area" onchange="handleSearchAndFilter()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-peach-400 focus:bg-white transition-all cursor-pointer">
-                        <option value="ALL">เลือกหมู่บ้าน (ทั้งหมด 16 หมู่)</option>
-                        <!-- Options generated in JS -->
+                <!-- Filter Vaccine Status -->
+                <div class="md:col-span-2">
+                    <select id="statusFilter" onchange="filterPets()" class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500 text-xs sm:text-sm bg-white">
+                        <option value="">สถานะวัคซีนทั้งหมด</option>
+                        <option value="up-to-date">ฉีดครบแล้ว</option>
+                        <option value="due-soon">ใกล้นัดฉีด</option>
+                        <option value="overdue">เลยกำหนดฉีด</option>
                     </select>
+                </div>
 
-                    <!-- Vaccine Status Filter -->
-                    <select id="filter-status" onchange="handleSearchAndFilter()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-peach-400 focus:bg-white transition-all cursor-pointer">
-                        <option value="ALL">สถานะวัคซีนทั้งหมด</option>
-                        <option value="COMPLETED">ฉีดครบแล้ว</option>
-                        <option value="DUE_SOON">ถึงกำหนดเร็วๆ นี้</option>
-                        <option value="OVERDUE">เลยกำหนดฉีด</option>
-                    </select>
+                <!-- Pet Species Filter -->
+                <div class="md:col-span-2 flex justify-end gap-1 bg-slate-100 p-1 rounded-xl">
+                    <button onclick="setSpeciesFilter('all')" id="species-all" class="flex-1 py-1 text-xs font-semibold rounded-lg bg-white shadow-sm text-slate-700">ทั้งหมด</button>
+                    <button onclick="setSpeciesFilter('dog')" id="species-dog" class="flex-1 py-1 text-xs font-semibold rounded-lg text-slate-500 hover:text-slate-700"><i class="fa-solid fa-dog"></i> หมา</button>
+                    <button onclick="setSpeciesFilter('cat')" id="species-cat" class="flex-1 py-1 text-xs font-semibold rounded-lg text-slate-500 hover:text-slate-700"><i class="fa-solid fa-cat"></i> แมว</button>
                 </div>
             </div>
         </div>
 
-        <!-- Content Display Section -->
-        <div class="relative min-h-[400px]">
-            
-            <!-- Loading Spinner Overlay -->
-            <div id="loading-spinner" class="hidden absolute inset-0 z-20 bg-white/80 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center p-8">
-                <div class="w-14 h-14 border-4 border-peach-200 border-t-peach-500 rounded-full animate-spin mb-4"></div>
-                <p class="text-sm font-semibold text-slate-700 animate-pulse">กำลังโหลดข้อมูลสัตว์เลี้ยง ตำบลห้วยยาบ...</p>
-            </div>
+        <!-- PET CARDS GRID HEADER -->
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="font-bold text-slate-700 text-base sm:text-lg flex items-center gap-2">
+                <i class="fa-solid fa-list text-amber-500"></i> รายชื่อสัตว์เลี้ยงในระบบ 
+                <span id="petCountBadge" class="bg-amber-100 text-amber-800 text-xs px-2.5 py-0.5 rounded-full font-bold">0 ตัว</span>
+            </h3>
+            <button onclick="openModal('registerModal')" class="text-xs bg-teal-500 text-white px-3 py-1.5 rounded-xl font-medium hover:bg-teal-600 transition shadow-sm">
+                <i class="fa-solid fa-plus mr-1"></i> เพิ่มสัตว์เลี้ยงใหม่
+            </button>
+        </div>
 
-            <!-- Empty Data Alert -->
-            <div id="empty-state" class="hidden bg-white rounded-2xl p-12 text-center border border-orange-100 custom-card-shadow flex flex-col items-center justify-center">
-                <div class="w-20 h-20 rounded-full bg-orange-50 text-peach-400 flex items-center justify-center text-3xl mb-4">
-                    <i class="fa-solid fa-shield-cat"></i>
-                </div>
-                <h3 class="text-lg font-bold text-slate-800">ไม่พบข้อมูลสัตว์เลี้ยง</h3>
-                <p class="text-xs text-slate-500 mt-1 max-w-sm">ลองเลือกหมู่บ้านอื่น หรือกดล้างตัวกรองเพื่อดูรายการทั้งหมดในตำบลห้วยยาบ</p>
-                <button onclick="resetFilters()" class="mt-4 px-4 py-2 rounded-xl text-xs font-semibold bg-orange-100 hover:bg-orange-200 text-peach-600 transition-all">
-                    ล้างการค้นหาทั้งหมด
-                </button>
-            </div>
+        <!-- PET GRID CONTAINER -->
+        <div id="petGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            <!-- Dynamic Cards Generated by JS -->
+        </div>
 
-            <!-- Pet Cards Grid View -->
-            <div id="pet-cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Cards render dynamically -->
+        <!-- Empty State -->
+        <div id="noResults" class="hidden text-center py-12 bg-white rounded-3xl border border-dashed border-slate-200">
+            <div class="w-14 h-14 bg-orange-100 text-orange-500 rounded-full flex items-center justify-center mx-auto mb-2 text-2xl">
+                <i class="fa-solid fa-paw"></i>
             </div>
+            <h4 class="font-bold text-slate-700 text-sm">ไม่พบข้อมูลสัตว์เลี้ยง</h4>
+            <p class="text-slate-400 text-xs mt-1">ลองเปลี่ยนเงื่อนไขค้นหา หรือกดเพิ่มลงทะเบียนสัตว์เลี้ยงใหม่</p>
         </div>
 
     </main>
 
-    <!-- Footer -->
-    <footer class="mt-auto bg-white border-t border-orange-100 py-6 text-center text-xs text-slate-500">
-        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div class="flex items-center gap-2">
-                <i class="fa-solid fa-heart text-rose-400"></i>
-                <span>PetCare Hub - ระบบทะเบียนและประวัติวัคซีนสัตว์เลี้ยง ตำบลห้วยยาบ</span>
-            </div>
-            <p>© 2026 ระบบทะเบียนสัตว์เลี้ยง ตำบลห้วยยาบ. All rights reserved.</p>
+    <!-- FOOTER -->
+    <footer class="bg-slate-800 text-slate-400 text-xs py-8 border-t border-slate-700 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-2">
+            <p class="text-slate-200 font-semibold">องค์การบริหารส่วนตำบลห้วยยาบ อำเภอบ้านธิ จังหวัดลำพูน</p>
+            <p>ระบบทะเบียนสัตว์เลี้ยงและติดตามประวัติฉีดวัคซีนดิจิทัล (HuaiyapPetCare Hub v3.1 - Owner Editable with Photos)</p>
+            <p class="text-slate-500 text-[11px]">รหัสผ่านแอดมินทดสอบ: <strong class="text-amber-400">1234</strong></p>
         </div>
     </footer>
 
-    <!-- MODAL 1: Detail View Modal -->
-    <div id="detail-modal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-xl rounded-3xl p-6 sm:p-8 border border-orange-100 shadow-2xl relative max-h-[90vh] overflow-y-auto">
-            <button onclick="closeDetailModal()" class="absolute top-5 right-5 w-9 h-9 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-full flex items-center justify-center transition-all">
+    <!-- MODAL 1: ADMIN LOGIN -->
+    <div id="adminLoginModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full shadow-2xl overflow-hidden border border-slate-100 p-6 relative">
+            <button onclick="closeModal('adminLoginModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <div class="text-center mb-5">
+                <div class="w-12 h-12 bg-slate-900 text-amber-400 rounded-2xl flex items-center justify-center mx-auto mb-2 text-xl shadow-md">
+                    <i class="fa-solid fa-user-shield"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-800">เข้าสู่ระบบแอดมิน / เจ้าหน้าที่</h3>
+                <p class="text-xs text-slate-500 mt-0.5">กรอกรหัส PIN สำหรับเจ้าหน้าที่ อบต.ห้วยยาบ</p>
+            </div>
+
+            <form onsubmit="handleAdminLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">รหัส PIN (Default: 1234)</label>
+                    <input type="password" id="adminPinInput" required placeholder="••••" maxlength="8" class="w-full text-center text-lg tracking-widest py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono">
+                </div>
+
+                <button type="submit" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-amber-400 font-semibold rounded-xl shadow-md text-xs transition">
+                    ยืนยันเข้าสู่ระบบ
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: OWNER LOGIN -->
+    <div id="ownerLoginModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full shadow-2xl overflow-hidden border border-slate-100 p-6 relative">
+            <button onclick="closeModal('ownerLoginModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <div class="text-center mb-5">
+                <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-2 text-xl shadow-inner">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-800">เข้าสู่ระบบเจ้าของสัตว์เลี้ยง</h3>
+                <p class="text-xs text-slate-500 mt-0.5">กรอกเบอร์โทรศัพท์ที่เคยลงทะเบียนไว้</p>
+            </div>
+
+            <form onsubmit="handleOwnerLogin(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">เบอร์โทรศัพท์เจ้าของ</label>
+                    <input type="tel" id="ownerPhoneInput" required placeholder="เช่น 0812345678" class="w-full pl-3 pr-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500 text-xs">
+                </div>
+
+                <div class="bg-amber-50 p-2.5 rounded-xl border border-amber-100 text-[11px] text-amber-800">
+                    💡 ตัวอย่างเบอร์ในระบบ: <span class="font-bold underline cursor-pointer" onclick="document.getElementById('ownerPhoneInput').value='0812345678'">0812345678</span> หรือ <span class="font-bold underline cursor-pointer" onclick="document.getElementById('ownerPhoneInput').value='0898765432'">0898765432</span>
+                </div>
+
+                <button type="submit" class="w-full py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold rounded-xl shadow-md text-xs transition">
+                    เข้าสู่ระบบ
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 3: DIGITAL PET ID & QR CODE CARD -->
+    <div id="digitalIdModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full shadow-2xl overflow-hidden border border-slate-100 relative">
+            <button onclick="closeModal('digitalIdModal')" class="no-print absolute top-4 right-4 z-10 w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full flex items-center justify-center transition">
                 <i class="fa-solid fa-xmark"></i>
             </button>
 
-            <!-- Modal Header / Cover Profile -->
-            <div class="flex items-center gap-5 border-b border-slate-100 pb-6">
-                <div id="modal-pet-avatar-container" class="w-20 h-20 rounded-2xl bg-orange-100 text-peach-500 flex items-center justify-center text-4xl shadow-inner flex-shrink-0 overflow-hidden border border-orange-200">
-                    <i id="modal-pet-avatar-icon" class="fa-solid fa-dog"></i>
-                    <img id="modal-pet-avatar-img" class="w-full h-full object-cover hidden" alt="Pet Avatar">
+            <div id="digitalIdModalContent">
+                <!-- Digital Badge Header -->
+                <div class="gradient-bg p-5 text-white text-center relative">
+                    <div class="text-[10px] uppercase tracking-widest font-bold opacity-80 mb-0.5">Huaiyap Digital Pet Passport</div>
+                    <h3 class="text-base font-bold">บัตรประจำตัวสัตว์เลี้ยงดิจิทัล</h3>
+                    <p class="text-[11px] opacity-90">องค์การบริหารส่วนตำบลห้วยยาบ อำเภอบ้านธิ จังหวัดลำพูน</p>
                 </div>
-                <div>
-                    <div class="flex items-center gap-2">
-                        <h2 id="modal-pet-name" class="text-2xl font-bold text-slate-800">--</h2>
-                        <span id="modal-pet-type-badge" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-orange-100 text-peach-600">--</span>
-                    </div>
-                    <p id="modal-pet-breed" class="text-sm text-slate-500 mt-1">สายพันธุ์: --</p>
-                    <div id="modal-vaccine-status-badge" class="mt-2 inline-block">--</div>
+
+                <!-- Digital Badge Body -->
+                <div id="digitalCardBody" class="p-5 text-center space-y-3">
+                    <!-- JS Generated Content -->
                 </div>
             </div>
 
-            <!-- Modal Detail Body -->
-            <div class="py-6 space-y-6">
-                <!-- Owner & Location Section -->
-                <div>
-                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">ข้อมูลเจ้าของและที่อยู่ (ตำบลห้วยยาบ)</h4>
-                    <div class="bg-orange-50/60 rounded-2xl p-4 space-y-3 border border-orange-100/80">
-                        <div class="flex items-center gap-3">
-                            <i class="fa-solid fa-user text-peach-500 w-5"></i>
-                            <span class="text-xs text-slate-500">เจ้าของ:</span>
-                            <span id="modal-owner-name" class="text-sm font-semibold text-slate-700">--</span>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <i class="fa-solid fa-phone text-peach-500 w-5"></i>
-                            <span class="text-xs text-slate-500">เบอร์โทรศัพท์:</span>
-                            <a id="modal-owner-phone" href="#" class="text-sm font-semibold text-tealish-600 hover:underline">--</a>
-                        </div>
-                        <div class="flex items-start gap-3">
-                            <i class="fa-solid fa-location-dot text-peach-500 w-5 mt-0.5"></i>
-                            <span class="text-xs text-slate-500 flex-shrink-0">หมู่บ้าน / พื้นที่:</span>
-                            <span id="modal-location" class="text-sm font-medium text-slate-800">--</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Vaccine Details Section -->
-                <div>
-                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">ประวัติการรับวัคซีน</h4>
-                    <div class="bg-slate-50 rounded-2xl p-4 space-y-3 border border-slate-200/60">
-                        <div class="flex justify-between items-center text-sm">
-                            <span class="text-slate-500">วัคซีนที่ได้รับ:</span>
-                            <span id="modal-vaccine-name" class="font-semibold text-slate-800">--</span>
-                        </div>
-                        <div class="flex justify-between items-center text-sm">
-                            <span class="text-slate-500">วันที่ฉีดล่าสุด:</span>
-                            <span id="modal-last-vaccine-date" class="font-medium text-slate-700">--</span>
-                        </div>
-                        <div class="flex justify-between items-center text-sm pt-2 border-t border-slate-200/60">
-                            <span class="text-slate-500">วันที่นัดครั้งถัดไป:</span>
-                            <span id="modal-next-vaccine-date" class="font-bold text-peach-600">--</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Modal Footer Action -->
-            <div class="pt-4 border-t border-slate-100 flex justify-end">
-                <button onclick="closeDetailModal()" class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all">
-                    ปิดหน้าต่าง
+            <!-- Modal Action Footer -->
+            <div class="no-print p-4 bg-slate-50 border-t border-slate-100 flex gap-2">
+                <button onclick="window.print()" class="flex-1 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold rounded-xl transition flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-print"></i> พิมพ์บัตร
+                </button>
+                <button onclick="downloadQRCode()" class="flex-1 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold rounded-xl transition flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-download"></i> ดาวน์โหลด QR
+                </button>
+                <button onclick="closeModal('digitalIdModal')" class="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-semibold rounded-xl transition">
+                    ปิด
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL 2: Add/Edit Pet Registration Modal -->
-    <div id="pet-modal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-2xl rounded-3xl p-6 sm:p-8 border border-orange-100 shadow-2xl relative max-h-[90vh] overflow-y-auto">
-            <button onclick="closePetModal()" class="absolute top-5 right-5 w-9 h-9 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-full flex items-center justify-center transition-all">
-                <i class="fa-solid fa-xmark"></i>
+    <!-- MODAL 4: EDIT PET (ADMIN & OWNER PERMISSION) -->
+    <div id="editPetModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden border border-slate-100 p-6 relative max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <button onclick="closeModal('editPetModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-lg"></i>
             </button>
 
-            <!-- Modal Title -->
-            <div class="flex items-center gap-3 border-b border-slate-100 pb-4 mb-6">
-                <div class="w-10 h-10 rounded-xl bg-orange-100 text-peach-500 flex items-center justify-center text-xl">
-                    <i class="fa-solid fa-file-pen"></i>
+            <div class="flex items-center space-x-3 mb-5 border-b border-slate-100 pb-3">
+                <div class="w-10 h-10 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-pen-to-square"></i>
                 </div>
                 <div>
-                    <h2 class="text-xl font-bold text-slate-800">ลงทะเบียนสัตว์เลี้ยง (ตำบลห้วยยาบ)</h2>
-                    <p class="text-xs text-slate-500">บันทึกข้อมูลสัตว์เลี้ยง รูปถ่าย เจ้าของ และประวัติการรับวัคซีน</p>
+                    <h3 class="text-base font-bold text-slate-800">แก้ไขข้อมูลสัตว์เลี้ยง</h3>
+                    <p id="editPetIdBadge" class="text-xs text-slate-400 font-mono">ID: -</p>
                 </div>
             </div>
 
-            <!-- Registration Form -->
-            <form id="pet-form" onsubmit="handleFormSubmit(event)" class="space-y-5">
-                
-                <!-- Section 1: Pet Info & Image -->
-                <div class="space-y-4">
-                    <h4 class="text-xs font-bold text-peach-600 uppercase tracking-wider flex items-center gap-1.5">
-                        <i class="fa-solid fa-paw"></i> ข้อมูลและรูปถ่ายสัตว์เลี้ยง
-                    </h4>
-                    
-                    <!-- Image Upload / Preview Area -->
-                    <div class="flex flex-col sm:flex-row items-center gap-4 bg-orange-50/50 p-4 rounded-2xl border border-orange-100">
-                        <div class="w-24 h-24 rounded-2xl bg-white border-2 border-dashed border-peach-300 flex items-center justify-center relative overflow-hidden flex-shrink-0 group">
-                            <img id="form-img-preview" class="w-full h-full object-cover hidden" alt="Preview">
-                            <div id="form-img-placeholder" class="text-center text-slate-400 p-2">
-                                <i class="fa-solid fa-camera text-2xl text-peach-400"></i>
-                                <span class="block text-[10px] mt-1">รูปสัตว์เลี้ยง</span>
-                            </div>
-                        </div>
-                        <div class="space-y-2 w-full">
-                            <div>
-                                <label class="block text-xs font-medium text-slate-700 mb-1">อัปโหลดรูปภาพสัตว์เลี้ยง</label>
-                                <input type="file" id="form-photo-file" accept="image/*" onchange="handleFileSelect(event)" class="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-peach-100 file:text-peach-700 hover:file:bg-peach-200 cursor-pointer">
-                            </div>
-                            <div class="text-center sm:text-left text-[10px] text-slate-400">หรือวาง URL รูปภาพ</div>
-                            <input type="url" id="form-photo-url" oninput="handleUrlInput(event)" placeholder="https://example.com/pet-image.jpg" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-peach-400">
-                        </div>
-                    </div>
+            <form onsubmit="handleSavePetEdit(event)" class="space-y-3 text-xs">
+                <input type="hidden" id="editPetId">
 
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">ชื่อสัตว์เลี้ยง <span class="text-rose-500">*</span></label>
-                            <input type="text" id="form-pet-name" required placeholder="เช่น ดุ๊กดิ๊ก, ส้มส้ม" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-peach-400 focus:bg-white">
+                <!-- IMAGE UPLOAD & PREVIEW SECTION -->
+                <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-2">
+                    <label class="block font-semibold text-slate-700">รูปภาพสัตว์เลี้ยง</label>
+                    <div class="flex items-center gap-4">
+                        <div id="editImgPreviewContainer" class="w-16 h-16 rounded-2xl bg-white border border-slate-200 overflow-hidden flex-shrink-0 flex items-center justify-center shadow-sm">
+                            <img id="editImgPreview" src="" alt="Preview" class="w-full h-full object-cover hidden">
+                            <span id="editImgPreviewPlaceholder" class="text-slate-300 text-2xl"><i class="fa-solid fa-image"></i></span>
                         </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">ประเภท <span class="text-rose-500">*</span></label>
-                            <select id="form-pet-type" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-peach-400 focus:bg-white cursor-pointer">
-                                <option value="หมา">🐶 หมา (Dog)</option>
-                                <option value="แมว">🐱 แมว (Cat)</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">สายพันธุ์</label>
-                            <input type="text" id="form-pet-breed" placeholder="เช่น โกลเด้น, สกอตติชโฟลด์" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-peach-400 focus:bg-white">
+                        <div class="flex-1 space-y-2">
+                            <div>
+                                <label class="block text-[11px] text-slate-500 mb-0.5">อัปโหลดไฟล์ภาพจากอุปกรณ์</label>
+                                <input type="file" id="editImageFile" accept="image/*" onchange="handleImageFileSelect(event, 'edit')" class="w-full text-[11px] text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-[11px] file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100">
+                            </div>
+                            <div class="text-[10px] text-slate-400 text-center">- หรือ -</div>
+                            <div>
+                                <input type="url" id="editImageUrl" oninput="handleImageUrlInput(event, 'edit')" placeholder="ใส่ URL รูปภาพ (https://...)" class="w-full p-1.5 rounded-lg border border-slate-200 text-xs focus:ring-1 focus:ring-amber-500 focus:outline-none">
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Section 2: Owner Info & Village Selection (16 Villages) -->
-                <div class="space-y-4 pt-3 border-t border-slate-100">
-                    <h4 class="text-xs font-bold text-peach-600 uppercase tracking-wider flex items-center gap-1.5">
-                        <i class="fa-solid fa-user"></i> ข้อมูลเจ้าของและหมู่บ้าน (ตำบลห้วยยาบ)
-                    </h4>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">ชื่อ-นามสกุล เจ้าของ <span class="text-rose-500">*</span></label>
-                            <input type="text" id="form-owner-name" required placeholder="เช่น นายสมชาย ใจดี" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-peach-400 focus:bg-white">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">เบอร์โทรศัพท์ <span class="text-rose-500">*</span></label>
-                            <input type="tel" id="form-owner-phone" required placeholder="เช่น 081-234-5678" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-peach-400 focus:bg-white">
-                        </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-600 mb-1">ชื่อสัตว์เลี้ยง *</label>
+                        <input type="text" id="editPetName" required class="w-full p-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-amber-500 focus:outline-none">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-slate-700 mb-1">หมู่บ้าน (16 หมู่บ้าน ในตำบลห้วยยาบ) <span class="text-rose-500">*</span></label>
-                        <select id="form-area" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-peach-400 focus:bg-white cursor-pointer">
-                            <!-- Populated in JS with all 16 villages -->
+                        <label class="block font-semibold text-slate-600 mb-1">ประเภท *</label>
+                        <select id="editSpecies" required onchange="handleSpeciesChange('edit')" class="w-full p-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-amber-500 focus:outline-none bg-white">
+                            <option value="dog">สุนัข (Dog)</option>
+                            <option value="cat">แมว (Cat)</option>
                         </select>
                     </div>
                 </div>
 
-                <!-- Section 3: Vaccine Info -->
-                <div class="space-y-4 pt-3 border-t border-slate-100">
-                    <h4 class="text-xs font-bold text-peach-600 uppercase tracking-wider flex items-center gap-1.5">
-                        <i class="fa-solid fa-syringe"></i> ประวัติการฉีดวัคซีน
-                    </h4>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">วัคซีนที่ได้รับ</label>
-                            <input type="text" id="form-vaccine-name" placeholder="เช่น พิษสุนัขบ้า, รวม 5 โรค" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-peach-400 focus:bg-white">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">วันที่ฉีดล่าสุด</label>
-                            <input type="date" id="form-last-date" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-peach-400 focus:bg-white">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">วันที่นัดครั้งถัดไป</label>
-                            <input type="date" id="form-next-date" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-peach-400 focus:bg-white">
-                        </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-600 mb-1">สายพันธุ์</label>
+                        <input type="text" id="editBreed" class="w-full p-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-600 mb-1">เพศ</label>
+                        <select id="editGender" class="w-full p-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-amber-500 focus:outline-none bg-white">
+                            <option value="ผู้">ผู้</option>
+                            <option value="เมีย">เมีย</option>
+                        </select>
                     </div>
                 </div>
 
-                <!-- Submit Button -->
-                <div class="pt-4 border-t border-slate-100 flex justify-end gap-3">
-                    <button type="button" onclick="closePetModal()" class="px-5 py-2.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-600 transition-all">
-                        ยกเลิก
+                <div class="border-t border-slate-100 pt-3">
+                    <label class="block font-semibold text-slate-600 mb-1">ชื่อ-นามสกุล เจ้าของ *</label>
+                    <input type="text" id="editOwnerName" required class="w-full p-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-600 mb-1">เบอร์โทรศัพท์ *</label>
+                        <input type="tel" id="editOwnerPhone" required class="w-full p-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-600 mb-1">หมู่บ้าน *</label>
+                        <select id="editVillage" required class="w-full p-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-amber-500 focus:outline-none bg-white">
+                            <!-- JS Populated -->
+                        </select>
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-100 pt-3">
+                    <label class="block font-semibold text-slate-600 mb-1">วันที่ได้รับวัคซีนพิษสุนัขบ้าล่าสุด</label>
+                    <input type="date" id="editLastVaccine" class="w-full p-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                </div>
+
+                <div class="pt-3 flex gap-2">
+                    <button type="submit" class="flex-1 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-xl shadow-md transition">
+                        <i class="fa-solid fa-floppy-disk mr-1"></i> บันทึกการแก้ไข
                     </button>
-                    <button type="submit" id="btn-submit-form" class="px-6 py-2.5 rounded-xl text-xs font-semibold bg-gradient-to-r from-peach-500 to-amber-500 hover:from-peach-600 hover:to-amber-600 text-white shadow-md shadow-peach-500/20 transition-all flex items-center gap-2">
-                        <i class="fa-solid fa-floppy-disk"></i>
-                        <span>บันทึกข้อมูล</span>
+                    <button type="button" onclick="closeModal('editPetModal')" class="px-4 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-xl transition">
+                        ยกเลิก
                     </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- MODAL 3: Google Sheets Setup Modal -->
-    <div id="config-modal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-3xl rounded-3xl p-6 sm:p-8 border border-orange-100 shadow-2xl relative max-h-[90vh] overflow-y-auto">
-            <button onclick="closeConfigModal()" class="absolute top-5 right-5 w-9 h-9 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-full flex items-center justify-center transition-all">
-                <i class="fa-solid fa-xmark"></i>
+    <!-- MODAL 5: NEW PET REGISTRATION WITH PHOTO UPLOAD -->
+    <div id="registerModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden border border-slate-100 p-6 relative max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <button onclick="closeModal('registerModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-lg"></i>
             </button>
 
-            <!-- Modal Title -->
-            <div class="flex items-center gap-3 border-b border-slate-100 pb-4 mb-6">
-                <div class="w-10 h-10 rounded-xl bg-tealish-100 text-tealish-600 flex items-center justify-center text-xl">
-                    <i class="fa-solid fa-sliders"></i>
+            <div class="flex items-center space-x-3 mb-5 border-b border-slate-100 pb-3">
+                <div class="w-10 h-10 bg-teal-100 text-teal-600 rounded-xl flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-plus-circle"></i>
                 </div>
                 <div>
-                    <h2 class="text-xl font-bold text-slate-800">ตั้งค่า Google Sheets (ตำบลห้วยยาบ)</h2>
-                    <p class="text-xs text-slate-500">เลือกโหมดข้อมูล และตั้งค่าสคริปต์สำหรับบันทึกข้อมูลเข้า Google Sheets</p>
+                    <h3 class="text-base font-bold text-slate-800">ลงทะเบียนสัตว์เลี้ยงใหม่</h3>
+                    <p class="text-xs text-slate-500">บันทึกข้อมูลเข้าระบบทะเบียน อบต.ห้วยยาบ</p>
                 </div>
             </div>
 
-            <!-- Configuration Form & Instructions -->
-            <div class="space-y-6">
-                <!-- Source Toggle -->
+            <form onsubmit="handlePetRegistration(event)" class="space-y-3 text-xs">
+
+                <!-- IMAGE UPLOAD & PREVIEW SECTION -->
+                <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-2">
+                    <label class="block font-semibold text-slate-700">รูปภาพสัตว์เลี้ยง (ถ้ามี)</label>
+                    <div class="flex items-center gap-4">
+                        <div id="regImgPreviewContainer" class="w-16 h-16 rounded-2xl bg-white border border-slate-200 overflow-hidden flex-shrink-0 flex items-center justify-center shadow-sm">
+                            <img id="regImgPreview" src="" alt="Preview" class="w-full h-full object-cover hidden">
+                            <span id="regImgPreviewPlaceholder" class="text-slate-300 text-2xl"><i class="fa-solid fa-camera"></i></span>
+                        </div>
+                        <div class="flex-1 space-y-2">
+                            <div>
+                                <label class="block text-[11px] text-slate-500 mb-0.5">อัปโหลดไฟล์ภาพจากอุปกรณ์</label>
+                                <input type="file" id="regImageFile" accept="image/*" onchange="handleImageFileSelect(event, 'reg')" class="w-full text-[11px] text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-[11px] file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100">
+                            </div>
+                            <div class="text-[10px] text-slate-400 text-center">- หรือ -</div>
+                            <div>
+                                <input type="url" id="regImageUrl" oninput="handleImageUrlInput(event, 'reg')" placeholder="ใส่ URL รูปภาพ (https://...)" class="w-full p-1.5 rounded-lg border border-slate-200 text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-600 mb-1">ชื่อสัตว์เลี้ยง *</label>
+                        <input type="text" id="regPetName" required placeholder="เช่น ดุ๊กดิ๊ก, มอมแมม" class="w-full p-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-600 mb-1">ประเภท *</label>
+                        <select id="regSpecies" required onchange="handleSpeciesChange('reg')" class="w-full p-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                            <option value="dog">สุนัข (Dog)</option>
+                            <option value="cat">แมว (Cat)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-600 mb-1">สายพันธุ์</label>
+                        <input type="text" id="regBreed" placeholder="เช่น ไทย, โกลเด้น, สกอตติช" class="w-full p-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-600 mb-1">เพศ</label>
+                        <select id="regGender" class="w-full p-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                            <option value="ผู้">ผู้</option>
+                            <option value="เมีย">เมีย</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-100 pt-3">
+                    <label class="block font-semibold text-slate-600 mb-1">ชื่อ-นามสกุล เจ้าของ *</label>
+                    <input type="text" id="regOwnerName" required placeholder="เช่น นายสมชาย ใจดี" class="w-full p-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-600 mb-1">เบอร์โทรศัพท์ *</label>
+                        <input type="tel" id="regOwnerPhone" required placeholder="08XXXXXXXX" class="w-full p-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-600 mb-1">หมู่บ้าน *</label>
+                        <select id="regVillage" required class="w-full p-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                            <!-- JS Populated -->
+                        </select>
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-100 pt-3">
+                    <label class="block font-semibold text-slate-600 mb-1">วันที่ได้รับวัคซีนพิษสุนัขบ้าล่าสุด (ถ้ามี)</label>
+                    <input type="date" id="regLastVaccine" class="w-full p-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                </div>
+
+                <div class="pt-3 flex gap-2">
+                    <button type="submit" class="flex-1 py-2.5 bg-teal-500 hover:bg-teal-600 text-white font-semibold rounded-xl shadow-md transition">
+                        <i class="fa-solid fa-check mr-1"></i> บันทึกข้อมูล
+                    </button>
+                    <button type="button" onclick="closeModal('registerModal')" class="px-4 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-xl transition">
+                        ยกเลิก
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 6: VILLAGE STATS -->
+    <div id="statsModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-2xl w-full shadow-2xl overflow-hidden border border-slate-100 p-6 relative max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <button onclick="closeModal('statsModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <div class="flex items-center space-x-3 mb-5 border-b border-slate-100 pb-3">
+                <div class="w-10 h-10 bg-teal-100 text-teal-600 rounded-xl flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-chart-pie"></i>
+                </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">เลือกโหมดข้อมูล (Data Mode)</label>
-                    <div class="grid grid-cols-2 gap-3">
-                        <button id="opt-mock" onclick="selectSourceMode('mock')" class="p-3.5 rounded-2xl border-2 border-peach-500 bg-peach-50 text-peach-600 text-xs font-bold flex items-center justify-center gap-2 transition-all">
-                            <i class="fa-solid fa-cubes text-base"></i>
-                            <span>ใช้ข้อมูลตัวอย่าง (Mock Data)</span>
-                        </button>
-                        <button id="opt-real" onclick="selectSourceMode('real')" class="p-3.5 rounded-2xl border-2 border-slate-200 bg-slate-50 text-slate-500 text-xs font-bold flex items-center justify-center gap-2 transition-all">
-                            <i class="fa-solid fa-link text-base"></i>
-                            <span>เชื่อมต่อ Google Sheet จริง</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Sheet Settings Input -->
-                <div id="real-sheet-inputs" class="space-y-4 pt-4 border-t border-slate-100 opacity-50 pointer-events-none transition-all">
-                    <div>
-                        <label class="block text-xs font-medium text-slate-700 mb-1">Google Sheet ID <span class="text-rose-500">*</span></label>
-                        <input type="text" id="input-sheet-id" placeholder="ตัวอย่าง: 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-tealish-400">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-700 mb-1">ชื่อแท็บ (Sheet/Tab Name)</label>
-                        <input type="text" id="input-sheet-name" value="Sheet1" placeholder="เช่น Sheet1 หรือ ข้อมูลห้วยยาบ" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-tealish-400">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-700 mb-1">Web App URL (สำหรับส่งฟอร์มบันทึกข้อมูลย้อนกลับเข้า Sheet)</label>
-                        <input type="text" id="input-webapp-url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-tealish-400">
-                    </div>
-                </div>
-
-                <!-- Google Apps Script Code Instructions -->
-                <div class="bg-slate-900 rounded-2xl p-4 text-slate-200 text-xs space-y-3">
-                    <div class="flex justify-between items-center text-slate-300">
-                        <span class="font-bold text-tealish-400"><i class="fa-code fa-solid"></i> โค้ด Google Apps Script (รองรับอัปโหลดรูปภาพ)</span>
-                        <button onclick="copyAppsScriptCode()" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-[10px] transition-all flex items-center gap-1">
-                            <i class="fa-regular fa-copy"></i> คัดลอกโค้ด
-                        </button>
-                    </div>
-                    <pre class="bg-slate-950 p-3 rounded-xl font-mono text-[11px] overflow-x-auto text-emerald-400 leading-relaxed" id="apps-script-code">
-function doPost(e) {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  var data = JSON.parse(e.postData.contents);
-  
-  sheet.appendRow([
-    data.petName,
-    data.petType,
-    data.breed,
-    data.ownerName,
-    data.ownerPhone,
-    data.area,
-    data.vaccineName,
-    data.lastDate,
-    data.nextDate,
-    data.photoUrl || ''
-  ]);
-  
-  return ContentService.createTextOutput(JSON.stringify({result: "success"}))
-    .setMimeType(ContentService.MimeType.JSON);
-}</pre>
-                    <div class="text-[11px] text-slate-400 space-y-1 pt-1 border-t border-slate-800">
-                        <p class="font-semibold text-amber-300">โครงสร้างลำดับคอลัมน์ใน Sheet (เรียงตาม A-J):</p>
-                        <p class="font-mono text-slate-300">1.ชื่อสัตว์ | 2.ประเภท | 3.สายพันธุ์ | 4.ชื่อเจ้าของ | 5.เบอร์โทร | 6.หมู่บ้าน | 7.ชื่อวัคซีน | 8.วันที่ฉีดล่าสุด | 9.วันที่นัดถัดไป | 10.รูปถ่าย(URL)</p>
-                    </div>
+                    <h3 class="text-base font-bold text-slate-800">สถิติการรับวัคซีน จำแนกตาม 16 หมู่บ้าน</h3>
+                    <p class="text-xs text-slate-500">ตำบลห้วยยาบ อำเภอบ้านธิ จังหวัดลำพูน</p>
                 </div>
             </div>
 
-            <!-- Modal Footer Action -->
-            <div class="pt-4 border-t border-slate-100 flex justify-end gap-3 mt-4">
-                <button onclick="closeConfigModal()" class="px-5 py-2.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-600 transition-all">
-                    ยกเลิก
-                </button>
-                <button onclick="saveConfigAndFetch()" class="px-6 py-2.5 rounded-xl text-xs font-semibold bg-tealish-600 hover:bg-tealish-700 text-white shadow-md shadow-tealish-600/20 transition-all">
-                    บันทึกการตั้งค่า
-                </button>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-600 border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-200 text-slate-700">
+                            <th class="p-2.5 font-bold">หมู่บ้าน</th>
+                            <th class="p-2.5 text-center font-bold">สุนัข (ตัว)</th>
+                            <th class="p-2.5 text-center font-bold">แมว (ตัว)</th>
+                            <th class="p-2.5 text-center font-bold">รวมทั้งหมด</th>
+                            <th class="p-2.5 text-center font-bold">ฉีดวัคซีนแล้ว</th>
+                            <th class="p-2.5 text-center font-bold">ร้อยละ (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="villageStatsTableBody" class="divide-y divide-slate-100">
+                        <!-- JS Dynamic Rows -->
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 
-    <!-- Application Script -->
+    <!-- MODAL 7: GOOGLE SHEETS & API HELP -->
+    <div id="googleSheetHelpModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden border border-slate-100 p-6 relative max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <button onclick="closeModal('googleSheetHelpModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <div class="flex items-center space-x-3 mb-4 border-b border-slate-100 pb-3">
+                <div class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-file-excel"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-slate-800">การเชื่อมต่อ Google Sheets API</h3>
+                    <p class="text-xs text-slate-500">สำหรับเจ้าหน้าที่ไอที อบต.ห้วยยาบ</p>
+                </div>
+            </div>
+
+            <div class="space-y-3 text-xs text-slate-600 leading-relaxed">
+                <p>ระบบรองรับการเชื่อมต่อกับ Google Sheets ผ่าน **Google Apps Script Web App** เพื่อจัดเก็บข้อมูลแบบ Real-time บนคลาวด์ของหน่วยงาน</p>
+                
+                <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 font-mono text-[11px] overflow-x-auto">
+                    <div class="text-emerald-700 font-bold mb-1">// ตัวอย่าง Google Apps Script (doPost)</div>
+                    <pre>function doPost(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var data = JSON.parse(e.postData.contents);
+  sheet.appendRow([new Date(), data.id, data.name, data.species, data.owner, data.phone, data.village, data.lastVaccine, data.imageUrl]);
+  return ContentService.createTextOutput(JSON.stringify({result: "success"})).setMimeType(ContentService.MimeType.JSON);
+}</pre>
+                </div>
+
+                <div class="bg-amber-50 p-3 rounded-2xl border border-amber-200 text-amber-800">
+                    <i class="fa-solid fa-lightbulb mr-1"></i> ปัจจุบันระบบใช้ LocalStorage ในการบันทึกข้อมูลตัวอย่าง (รวมรูปภาพสัตว์เลี้ยง) หากต้องการเปลี่ยนไปใช้ Google Sheets สามารถใส่ Web App URL ในสคริปต์ได้ทันที
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
     <script>
-        // --- List of All 16 Villages in Tambon Huai Yap ---
-        const HUAI_YAP_VILLAGES = [
-            "หมู่ที่ 1 บ้านแจ้ซ้อน",
-            "หมู่ที่ 2 บ้านห้วยยาบ",
-            "หมู่ที่ 3 บ้านห้วยม่วง",
-            "หมู่ที่ 4 บ้านห้วยไซเหนือ",
-            "หมู่ที่ 5 บ้านป่าตึง",
-            "หมู่ที่ 6 บ้านสันพระเจ้าแดง",
-            "หมู่ที่ 7 บ้านแม่หาด",
-            "หมู่ที่ 8 บ้านห้วยไซใต้",
-            "หมู่ที่ 9 บ้านห้วยไซกลาง",
-            "หมู่ที่ 10 บ้านแสนตอ",
-            "หมู่ที่ 11 บ้านป่าลาน",
-            "หมู่ที่ 12 บ้านป่าหมอก",
-            "หมู่ที่ 13 บ้านห้วยไซใหม่พัฒนา",
-            "หมู่ที่ 14 บ้านห้วยไซ",
-            "หมู่ที่ 15 บ้านห้วยไซสุขสวัสดิ์",
-            "หมู่ที่ 16 บ้านห้วยม่วง-ไร่พัฒนา"
+        // Default Avatars
+        const DEFAULT_DOG_AVATAR = "https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=400&q=80";
+        const DEFAULT_CAT_AVATAR = "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=400&q=80";
+
+        // 16 Villages in Huai Yap Sub-district
+        const VILLAGES = [
+            "หมู่ 1 บ้านป่าห้า",
+            "หมู่ 2 บ้านห้วยยาบ",
+            "หมู่ 3 บ้านไร่",
+            "หมู่ 4 บ้านป่าเอื้อง",
+            "หมู่ 5 บ้านวังธาร",
+            "หมู่ 6 บ้านป่าเดื่อ",
+            "หมู่ 7 บ้านดอนชัย",
+            "หมู่ 8 บ้านป่าตาล",
+            "หมู่ 9 บ้านหนองเกิด",
+            "หมู่ 10 บ้านป่าสัก",
+            "หมู่ 11 บ้านทุ่งยาว",
+            "หมู่ 12 บ้านศรีชุม",
+            "หมู่ 13 บ้านผาตั้ง",
+            "หมู่ 14 บ้านห้วยยาบใหม่",
+            "หมู่ 15 บ้านดอนชัยพัฒนา",
+            "หมู่ 16 บ้านเจริญเมือง"
         ];
 
-        // --- Mock Data Generator for Tambon Huai Yap ---
-        const MOCK_PETS = [
-            ["ดุ๊กดิ๊ก", "หมา", "โกลเด้น รีทรีฟเวอร์", "สมชาย ใจดี", "081-234-5678", "หมู่ที่ 2 บ้านห้วยยาบ", "พิษสุนัขบ้า, รวม 5 โรค", "2026-02-15", "2027-02-15", "https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=300&q=80"],
-            ["ส้มส้ม", "แมว", "เปอร์เซีย", "มณีวรรณ สุขเสริฐ", "089-987-6543", "หมู่ที่ 6 บ้านสันพระเจ้าแดง", "พิษสุนัขบ้า, ไข้หัดแมว", "2025-11-10", "2026-11-10", "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=300&q=80"],
-            ["โบโบ้", "หมา", "พุดเดิ้ล", "กิตติพงษ์ วิเศษ", "086-555-1234", "หมู่ที่ 1 บ้านแจ้ซ้อน", "พิษสุนัขบ้า", "2025-09-01", "2026-09-01", ""],
-            ["มอมแมม", "แมว", "ไทยวิเชียรมาศ", "นภาภรณ์ แจ่มใส", "092-444-8899", "หมู่ที่ 4 บ้านห้วยไซเหนือ", "พิษสุนัขบ้า", "2026-10-01", "2026-11-01", ""],
-            ["ชาโคล", "หมา", "ไซบีเรียน ฮัสกี", "วิชัย มีสุข", "083-111-2233", "หมู่ที่ 3 บ้านห้วยม่วง", "รวม 5 โรค", "2025-05-20", "2026-05-20", "https://images.unsplash.com/photo-1605568427561-40dd23c2acea?auto=format&fit=crop&w=300&q=80"],
-            ["กะทิ", "แมว", "สกอตติชโฟลด์", "ปรียาพร สมบูรณ์", "087-666-9900", "หมู่ที่ 8 บ้านห้วยไซใต้", "พิษสุนัขบ้า", "2026-01-10", "2027-01-10", ""],
-            ["บิ๊กบอส", "หมา", "บางแก้ว", "ประเสริฐ คำมา", "084-333-2211", "หมู่ที่ 5 บ้านป่าตึง", "พิษสุนัขบ้า", "2025-10-15", "2026-10-15", ""],
-            ["ถุงเงิน", "แมว", "ไทยสามสี", "วรรณา สุวรรณ", "088-777-4455", "หมู่ที่ 10 บ้านแสนตอ", "พิษสุนัขบ้า", "2026-02-01", "2027-02-01", ""]
-        ];
-
-        // --- App State ---
-        let appState = {
-            sourceMode: 'mock',
-            sheetId: '',
-            sheetName: 'Sheet1',
-            webAppUrl: '',
-            pets: [],
-            filteredPets: [],
-            currentPhotoBase64: '',
-            activeFilter: {
-                search: '',
-                type: 'ALL',
-                area: 'ALL',
-                status: 'ALL'
+        // Initial Mock Data with Pet Images
+        const INITIAL_PETS = [
+            {
+                id: "PET-1001",
+                name: "ดุ๊กดิ๊ก",
+                species: "dog",
+                breed: "โกลเด้น รีทรีฟเวอร์",
+                gender: "ผู้",
+                owner: "สมชาย ใจดี",
+                phone: "0812345678",
+                village: "หมู่ 2 บ้านห้วยยาบ",
+                lastVaccine: "2026-03-15",
+                imageUrl: "https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=400&q=80"
+            },
+            {
+                id: "PET-1002",
+                name: "มอมแมม",
+                species: "cat",
+                breed: "ไทยวิเชียรมาศ",
+                gender: "เมีย",
+                owner: "สมชาย ใจดี",
+                phone: "0812345678",
+                village: "หมู่ 2 บ้านห้วยยาบ",
+                lastVaccine: "2025-05-10",
+                imageUrl: "https://images.unsplash.com/photo-1573865526739-10659fec78a5?auto=format&fit=crop&w=400&q=80"
+            },
+            {
+                id: "PET-1003",
+                name: "โบ้",
+                species: "dog",
+                breed: "ไทยทางอ่าว",
+                gender: "ผู้",
+                owner: "นภา วงศ์ใหญ่",
+                phone: "0898765432",
+                village: "หมู่ 1 บ้านป่าห้า",
+                lastVaccine: "2025-11-20",
+                imageUrl: "https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?auto=format&fit=crop&w=400&q=80"
+            },
+            {
+                id: "PET-1004",
+                name: "ส้มส้ม",
+                species: "cat",
+                breed: "ส้มไทย",
+                gender: "เมีย",
+                owner: "วิชัย ศรีสว่าง",
+                phone: "0861112233",
+                village: "หมู่ 7 บ้านดอนชัย",
+                lastVaccine: "2026-01-05",
+                imageUrl: "https://images.unsplash.com/photo-1533738363-b7f9aef128ce?auto=format&fit=crop&w=400&q=80"
             }
-        };
+        ];
 
-        // --- Lifecycle & Init ---
-        window.addEventListener('DOMContentLoaded', () => {
+        // Global States
+        let pets = [];
+        let isAdminLoggedIn = false;
+        let loggedOwnerPhone = null;
+        let selectedSpecies = 'all';
+
+        // Temporary Base64 Storage during Form Upload
+        let currentRegImageBase64 = null;
+        let currentEditImageBase64 = null;
+
+        // INITIALIZATION
+        document.addEventListener('DOMContentLoaded', () => {
+            initData();
             populateVillageDropdowns();
-
-            const savedSheetId = localStorage.getItem('pet_sheet_id');
-            const savedSheetName = localStorage.getItem('pet_sheet_name');
-            const savedWebAppUrl = localStorage.getItem('pet_webapp_url');
-            const savedMode = localStorage.getItem('pet_source_mode');
-
-            if (savedSheetId && savedMode === 'real') {
-                appState.sheetId = savedSheetId;
-                appState.sheetName = savedSheetName || 'Sheet1';
-                appState.webAppUrl = savedWebAppUrl || '';
-                appState.sourceMode = 'real';
-
-                document.getElementById('input-sheet-id').value = savedSheetId;
-                document.getElementById('input-sheet-name').value = appState.sheetName;
-                document.getElementById('input-webapp-url').value = appState.webAppUrl;
-            }
-
-            updateConfigUI();
-            fetchData();
+            renderPetGrid();
+            updateWidgetsAndStats();
+            checkAdminSession();
         });
 
-        // --- Populate Village Dropdowns with 16 Villages ---
-        function populateVillageDropdowns() {
-            const filterAreaSelect = document.getElementById('filter-area');
-            const formAreaSelect = document.getElementById('form-area');
-
-            // Reset options
-            filterAreaSelect.innerHTML = '<option value="ALL">เลือกหมู่บ้าน (ทั้งหมด 16 หมู่)</option>';
-            formAreaSelect.innerHTML = '<option value="" disabled selected>-- เลือกหมู่บ้านในตำบลห้วยยาบ --</option>';
-
-            HUAI_YAP_VILLAGES.forEach(village => {
-                // Filter dropdown option
-                const optFilter = document.createElement('option');
-                optFilter.value = village;
-                optFilter.textContent = village;
-                filterAreaSelect.appendChild(optFilter);
-
-                // Form select option
-                const optForm = document.createElement('option');
-                optForm.value = village;
-                optForm.textContent = village;
-                formAreaSelect.appendChild(optForm);
-            });
-        }
-
-        // --- Fetch Data Core ---
-        async function fetchData() {
-            showLoading(true);
-            const refreshIcon = document.getElementById('refresh-icon');
-            refreshIcon.classList.add('animate-spin');
-
-            try {
-                if (appState.sourceMode === 'mock') {
-                    await new Promise(r => setTimeout(r, 400));
-                    parseRawData(MOCK_PETS);
-                } else {
-                    if (!appState.sheetId.trim()) {
-                        alert('กรุณากรอก Google Sheet ID ในเมนูตั้งค่า');
-                        openConfigModal();
-                        showLoading(false);
-                        refreshIcon.classList.remove('animate-spin');
-                        return;
-                    }
-
-                    const url = `https://docs.google.com/spreadsheets/d/${appState.sheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(appState.sheetName)}`;
-                    const response = await fetch(url);
-                    if (!response.ok) throw new Error('ไม่สามารถดึงข้อมูลได้ โปรดตรวจสอบการเปิดสิทธิ์แชร์ไฟล์ Sheet');
-
-                    const textData = await response.text();
-                    const jsonString = textData.substring(47, textData.length - 2);
-                    const json = JSON.parse(jsonString);
-
-                    const rows = json.table.rows.map(row => 
-                        row.c ? row.c.map(cell => cell ? (cell.f ? cell.f : cell.v) : '') : []
-                    );
-
-                    parseRawData(rows);
-                }
-
-                const now = new Date();
-                document.getElementById('last-updated-time').textContent = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
-
-            } catch (err) {
-                console.error(err);
-                alert(`เกิดข้อผิดพลาดในการโหลดข้อมูล: ${err.message}`);
-            } finally {
-                showLoading(false);
-                refreshIcon.classList.remove('animate-spin');
-            }
-        }
-
-        // --- Parse Raw Array to Pet Objects ---
-        function parseRawData(rowsArray) {
-            appState.pets = rowsArray.map((row, id) => {
-                const nextDate = row[8] ? new Date(row[8]) : null;
-                const status = calculateVaccineStatus(nextDate);
-
-                return {
-                    id: id,
-                    name: row[0] || 'ไม่ระบุชื่อ',
-                    type: row[1] || 'หมา',
-                    breed: row[2] || '-',
-                    ownerName: row[3] || '-',
-                    ownerPhone: row[4] || '-',
-                    area: row[5] || 'หมู่ที่ 2 บ้านห้วยยาบ',
-                    vaccineName: row[6] || 'ไม่มีประวัติ',
-                    lastDate: row[7] || '-',
-                    nextDateStr: row[8] || '-',
-                    nextDateObj: nextDate,
-                    photoUrl: row[9] || '',
-                    status: status
-                };
-            });
-
-            handleSearchAndFilter();
-            renderVillageSummaryDrawer();
-        }
-
-        // --- Vaccine Status Calculation ---
-        function calculateVaccineStatus(nextDate) {
-            if (!nextDate || isNaN(nextDate.getTime())) return 'COMPLETED';
-
-            const today = new Date();
-            today.setHours(0,0,0,0);
-            
-            const diffTime = nextDate - today;
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-            if (diffDays < 0) return 'OVERDUE';
-            if (diffDays <= 30) return 'DUE_SOON';
-            return 'COMPLETED';
-        }
-
-        // --- Render Village Drawer Summary ---
-        function renderVillageSummaryDrawer() {
-            const grid = document.getElementById('village-stats-grid');
-            grid.innerHTML = HUAI_YAP_VILLAGES.map(village => {
-                const villagePets = appState.pets.filter(p => p.area === village);
-                const count = villagePets.length;
-                
-                // Extract village short number (e.g., "ม.1", "ม.2")
-                const match = village.match(/หมู่ที่\s*(\d+)/);
-                const villageNum = match ? `ม.${match[1]}` : village;
-
-                return `
-                    <div onclick="filterByVillageQuick('${village}')" class="bg-slate-50 hover:bg-peach-50 border border-slate-200 hover:border-peach-300 rounded-2xl p-2.5 text-center cursor-pointer transition-all group">
-                        <span class="text-[11px] font-bold text-slate-500 group-hover:text-peach-600 block truncate">${villageNum}</span>
-                        <span class="text-xs font-semibold text-slate-700 group-hover:text-slate-900 block truncate text-[10px]">${village.replace(/หมู่ที่\s*\d+\s*/, '')}</span>
-                        <div class="mt-1 text-base font-extrabold text-slate-800 group-hover:text-peach-600">${count} <span class="text-[10px] font-normal text-slate-400">ตัว</span></div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function toggleVillageDrawer() {
-            const drawer = document.getElementById('village-summary-drawer');
-            drawer.classList.toggle('hidden');
-        }
-
-        function filterByVillageQuick(villageName) {
-            document.getElementById('filter-area').value = villageName;
-            handleSearchAndFilter();
-            window.scrollTo({ top: 350, behavior: 'smooth' });
-        }
-
-        // --- Filter Logic ---
-        function handleSearchAndFilter() {
-            const search = document.getElementById('search-input').value.toLowerCase().trim();
-            const type = document.getElementById('filter-type').value;
-            const area = document.getElementById('filter-area').value;
-            const status = document.getElementById('filter-status').value;
-
-            appState.activeFilter = { search, type, area, status };
-
-            appState.filteredPets = appState.pets.filter(pet => {
-                const matchType = (type === 'ALL') || (pet.type === type);
-                const matchArea = (area === 'ALL') || (pet.area === area);
-                const matchStatus = (status === 'ALL') || (pet.status === status);
-                
-                const matchSearch = !search || (
-                    pet.name.toLowerCase().includes(search) ||
-                    pet.breed.toLowerCase().includes(search) ||
-                    pet.ownerName.toLowerCase().includes(search) ||
-                    pet.ownerPhone.toLowerCase().includes(search) ||
-                    pet.area.toLowerCase().includes(search)
-                );
-
-                return matchType && matchArea && matchStatus && matchSearch;
-            });
-
-            renderPetCards();
-            updateWidgets();
-        }
-
-        function resetFilters() {
-            document.getElementById('search-input').value = '';
-            document.getElementById('filter-type').value = 'ALL';
-            document.getElementById('filter-area').value = 'ALL';
-            document.getElementById('filter-status').value = 'ALL';
-            handleSearchAndFilter();
-        }
-
-        // --- Render Cards ---
-        function renderPetCards() {
-            const container = document.getElementById('pet-cards-grid');
-            const emptyState = document.getElementById('empty-state');
-
-            if (appState.filteredPets.length === 0) {
-                container.innerHTML = '';
-                emptyState.classList.remove('hidden');
-                return;
+        function initData() {
+            const savedPets = localStorage.getItem('huaiyap_pets_v3_1');
+            if (savedPets) {
+                pets = JSON.parse(savedPets);
             } else {
-                emptyState.classList.add('hidden');
+                pets = [...INITIAL_PETS];
+                savePetsToLocalStorage();
             }
-
-            container.innerHTML = appState.filteredPets.map(pet => {
-                const isDog = pet.type === 'หมา';
-                const avatarIcon = isDog ? 'fa-dog' : 'fa-cat';
-                const avatarBg = isDog ? 'bg-blue-50 text-blue-500' : 'bg-amber-50 text-amber-500';
-
-                // Photo or Avatar Fallback
-                let avatarHTML = '';
-                if (pet.photoUrl) {
-                    avatarHTML = `<img src="${pet.photoUrl}" alt="${pet.name}" class="w-full h-full object-cover" onerror="this.outerHTML='<i class=\\'fa-solid ${avatarIcon} text-2xl\\'></i>'">`;
-                } else {
-                    avatarHTML = `<i class="fa-solid ${avatarIcon}"></i>`;
-                }
-
-                // Status Badge Helper
-                let statusBadge = '';
-                if (pet.status === 'COMPLETED') {
-                    statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-tealish-50 text-tealish-700 border border-tealish-200/80 flex items-center gap-1">
-                                    <i class="fa-solid fa-circle-check text-tealish-500"></i> ฉีดครบ
-                                   </span>`;
-                } else if (pet.status === 'DUE_SOON') {
-                    statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200/80 flex items-center gap-1">
-                                    <i class="fa-solid fa-clock text-amber-500"></i> ใกล้นัด
-                                   </span>`;
-                } else {
-                    statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200/80 flex items-center gap-1">
-                                    <i class="fa-solid fa-triangle-exclamation text-rose-500"></i> เลยนัด
-                                   </span>`;
-                }
-
-                return `
-                    <div class="bg-white rounded-3xl p-6 border border-orange-100 custom-card-shadow flex flex-col justify-between space-y-4 transition-all duration-300">
-                        <!-- Top Header Row -->
-                        <div class="flex items-start justify-between gap-3">
-                            <div class="flex items-center gap-3">
-                                <div class="w-14 h-14 rounded-2xl ${avatarBg} flex items-center justify-center text-2xl flex-shrink-0 shadow-inner overflow-hidden border border-slate-100">
-                                    ${avatarHTML}
-                                </div>
-                                <div>
-                                    <h3 class="text-lg font-bold text-slate-800 leading-snug">${pet.name}</h3>
-                                    <p class="text-xs text-slate-500">${pet.breed}</p>
-                                </div>
-                            </div>
-                            ${statusBadge}
-                        </div>
-
-                        <!-- Owner & Village Details -->
-                        <div class="bg-slate-50/80 rounded-2xl p-3.5 space-y-2 text-xs border border-slate-100">
-                            <div class="flex items-center justify-between">
-                                <span class="text-slate-400">เจ้าของ:</span>
-                                <span class="font-semibold text-slate-700">${pet.ownerName}</span>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <span class="text-slate-400">เบอร์โทร:</span>
-                                <span class="font-mono font-medium text-slate-700">${pet.ownerPhone}</span>
-                            </div>
-                            <div class="flex items-center justify-between pt-1 border-t border-slate-200/50">
-                                <span class="text-slate-400">พื้นที่:</span>
-                                <span class="font-bold text-tealish-700 truncate max-w-[170px]">${pet.area}</span>
-                            </div>
-                        </div>
-
-                        <!-- Vaccine Summary Footer & Action -->
-                        <div class="pt-2 flex items-center justify-between text-xs">
-                            <div>
-                                <span class="text-slate-400 block text-[10px]">นัดฉีดครั้งถัดไป</span>
-                                <span class="font-bold ${pet.status === 'OVERDUE' ? 'text-rose-500' : 'text-slate-700'}">
-                                    ${pet.nextDateStr}
-                                </span>
-                            </div>
-                            <button onclick="openDetailModal(${pet.id})" class="px-3.5 py-2 rounded-xl bg-orange-50 hover:bg-orange-100 text-peach-600 font-semibold transition-all flex items-center gap-1.5 border border-orange-200/60">
-                                <span>ดูประวัติ</span>
-                                <i class="fa-solid fa-chevron-right text-[10px]"></i>
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
         }
 
-        // --- Widgets Summary Calculator ---
-        function updateWidgets() {
-            const total = appState.pets.length;
-            const dogs = appState.pets.filter(p => p.type === 'หมา').length;
-            const cats = appState.pets.filter(p => p.type === 'แมว').length;
-            const vaccinated = appState.pets.filter(p => p.status === 'COMPLETED').length;
-            const upcoming = appState.pets.filter(p => p.status === 'DUE_SOON').length;
-            const overdue = appState.pets.filter(p => p.status === 'OVERDUE').length;
-
-            document.getElementById('stat-total-pets').textContent = total;
-            document.getElementById('stat-dogs').textContent = dogs;
-            document.getElementById('stat-cats').textContent = cats;
-            document.getElementById('stat-vaccinated').textContent = vaccinated;
-            document.getElementById('stat-upcoming').textContent = upcoming;
-            document.getElementById('stat-overdue').textContent = overdue;
+        function savePetsToLocalStorage() {
+            localStorage.setItem('huaiyap_pets_v3_1', JSON.stringify(pets));
         }
 
-        // --- Photo Handling in Form ---
-        function handleFileSelect(event) {
+        function populateVillageDropdowns() {
+            const filterSel = document.getElementById('villageFilter');
+            const editSel = document.getElementById('editVillage');
+            const regSel = document.getElementById('regVillage');
+
+            filterSel.innerHTML = '<option value="">ทุกหมู่บ้าน (ม.1 - ม.16)</option>';
+            editSel.innerHTML = '';
+            regSel.innerHTML = '';
+
+            VILLAGES.forEach(v => {
+                filterSel.innerHTML += `<option value="${v}">${v}</option>`;
+                editSel.innerHTML += `<option value="${v}">${v}</option>`;
+                regSel.innerHTML += `<option value="${v}">${v}</option>`;
+            });
+        }
+
+        // VACCINE STATUS CALCULATION
+        function getVaccineStatus(lastVaccineDateStr) {
+            if (!lastVaccineDateStr) return { status: 'overdue', label: 'ยังไม่ได้ฉีด', color: 'red', textClass: 'text-red-600', bgClass: 'bg-red-50 border-red-200' };
+
+            const lastDate = new Date(lastVaccineDateStr);
+            const today = new Date();
+            const nextDueDate = new Date(lastDate);
+            nextDueDate.setFullYear(nextDueDate.getFullYear() + 1);
+
+            const diffDays = Math.ceil((nextDueDate - today) / (1000 * 60 * 60 * 24));
+
+            if (diffDays < 0) {
+                return { status: 'overdue', label: 'เลยกำหนดฉีดวัคซีน', color: 'red', textClass: 'text-red-600', bgClass: 'bg-red-50 border-red-200' };
+            } else if (diffDays <= 30) {
+                return { status: 'due-soon', label: `ใกล้นัดฉีด (${diffDays} วัน)`, color: 'amber', textClass: 'text-amber-600', bgClass: 'bg-amber-50 border-amber-200' };
+            } else {
+                return { status: 'up-to-date', label: 'ฉีดครบถ้วนแล้ว', color: 'emerald', textClass: 'text-emerald-600', bgClass: 'bg-emerald-50 border-emerald-200' };
+            }
+        }
+
+        // IMAGE PREVIEW LOGIC
+        function handleImageFileSelect(event, mode) {
             const file = event.target.files[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    appState.currentPhotoBase64 = e.target.result;
-                    showFormPreview(e.target.result);
+                    const base64Str = e.target.result;
+                    if (mode === 'reg') {
+                        currentRegImageBase64 = base64Str;
+                        document.getElementById('regImageUrl').value = '';
+                        updateImagePreview('reg', base64Str);
+                    } else {
+                        currentEditImageBase64 = base64Str;
+                        document.getElementById('editImageUrl').value = '';
+                        updateImagePreview('edit', base64Str);
+                    }
                 };
                 reader.readAsDataURL(file);
             }
         }
 
-        function handleUrlInput(event) {
+        function handleImageUrlInput(event, mode) {
             const url = event.target.value.trim();
-            if (url) {
-                appState.currentPhotoBase64 = url;
-                showFormPreview(url);
+            if (mode === 'reg') {
+                currentRegImageBase64 = null;
+                document.getElementById('regImageFile').value = '';
+                updateImagePreview('reg', url);
             } else {
-                appState.currentPhotoBase64 = '';
-                hideFormPreview();
+                currentEditImageBase64 = null;
+                document.getElementById('editImageFile').value = '';
+                updateImagePreview('edit', url);
             }
         }
 
-        function showFormPreview(src) {
-            const img = document.getElementById('form-img-preview');
-            const placeholder = document.getElementById('form-img-placeholder');
-            img.src = src;
-            img.classList.remove('hidden');
-            placeholder.classList.add('hidden');
+        function handleSpeciesChange(mode) {
+            // Update preview placeholder if no custom image is provided
+            const species = document.getElementById(mode === 'reg' ? 'regSpecies' : 'editSpecies').value;
+            const currentImg = mode === 'reg' 
+                ? (currentRegImageBase64 || document.getElementById('regImageUrl').value) 
+                : (currentEditImageBase64 || document.getElementById('editImageUrl').value);
+
+            if (!currentImg) {
+                updateImagePreview(mode, species === 'dog' ? DEFAULT_DOG_AVATAR : DEFAULT_CAT_AVATAR);
+            }
         }
 
-        function hideFormPreview() {
-            const img = document.getElementById('form-img-preview');
-            const placeholder = document.getElementById('form-img-placeholder');
-            img.src = '';
-            img.classList.add('hidden');
-            placeholder.classList.remove('hidden');
-        }
+        function updateImagePreview(mode, src) {
+            const img = document.getElementById(mode === 'reg' ? 'regImgPreview' : 'editImgPreview');
+            const placeholder = document.getElementById(mode === 'reg' ? 'regImgPreviewPlaceholder' : 'editImgPreviewPlaceholder');
 
-        // --- Detail Modal Controller ---
-        function openDetailModal(petId) {
-            const pet = appState.pets.find(p => p.id === petId);
-            if (!pet) return;
-
-            const isDog = pet.type === 'หมา';
-            const icon = document.getElementById('modal-pet-avatar-icon');
-            const img = document.getElementById('modal-pet-avatar-img');
-
-            if (pet.photoUrl) {
-                img.src = pet.photoUrl;
+            if (src) {
+                img.src = src;
+                img.onerror = function() {
+                    const species = document.getElementById(mode === 'reg' ? 'regSpecies' : 'editSpecies').value;
+                    img.src = species === 'dog' ? DEFAULT_DOG_AVATAR : DEFAULT_CAT_AVATAR;
+                };
                 img.classList.remove('hidden');
-                icon.classList.add('hidden');
+                if (placeholder) placeholder.classList.add('hidden');
             } else {
                 img.classList.add('hidden');
-                icon.classList.remove('hidden');
-                icon.className = `fa-solid ${isDog ? 'fa-dog' : 'fa-cat'}`;
-            }
-
-            document.getElementById('modal-pet-name').textContent = pet.name;
-            document.getElementById('modal-pet-type-badge').textContent = pet.type;
-            document.getElementById('modal-pet-breed').textContent = `สายพันธุ์: ${pet.breed}`;
-            
-            const statusBadgeContainer = document.getElementById('modal-vaccine-status-badge');
-            if (pet.status === 'COMPLETED') {
-                statusBadgeContainer.innerHTML = `<span class="px-3 py-1 rounded-full text-xs font-semibold bg-tealish-50 text-tealish-700 border border-tealish-200">
-                    <i class="fa-solid fa-circle-check"></i> ฉีดวัคซีนครบแล้ว
-                </span>`;
-            } else if (pet.status === 'DUE_SOON') {
-                statusBadgeContainer.innerHTML = `<span class="px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                    <i class="fa-solid fa-clock"></i> ถึงกำหนดฉีดเร็วๆ นี้
-                </span>`;
-            } else {
-                statusBadgeContainer.innerHTML = `<span class="px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
-                    <i class="fa-solid fa-triangle-exclamation"></i> เลยกำหนดฉีดแล้ว
-                </span>`;
-            }
-
-            document.getElementById('modal-owner-name').textContent = pet.ownerName;
-            document.getElementById('modal-owner-phone').textContent = pet.ownerPhone;
-            document.getElementById('modal-owner-phone').href = `tel:${pet.ownerPhone.replace(/-/g, '')}`;
-            document.getElementById('modal-location').textContent = pet.area;
-
-            document.getElementById('modal-vaccine-name').textContent = pet.vaccineName;
-            document.getElementById('modal-last-vaccine-date').textContent = pet.lastDate;
-            document.getElementById('modal-next-vaccine-date').textContent = pet.nextDateStr;
-
-            document.getElementById('detail-modal').classList.remove('hidden');
-        }
-
-        function closeDetailModal() {
-            document.getElementById('detail-modal').classList.add('hidden');
-        }
-
-        // --- Add Pet Modal & Form Submit ---
-        function openPetModal() {
-            document.getElementById('pet-modal').classList.remove('hidden');
-        }
-
-        function closePetModal() {
-            document.getElementById('pet-modal').classList.add('hidden');
-            document.getElementById('pet-form').reset();
-            appState.currentPhotoBase64 = '';
-            hideFormPreview();
-        }
-
-        async function handleFormSubmit(event) {
-            event.preventDefault();
-            const submitBtn = document.getElementById('btn-submit-form');
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> กำลังบันทึก...`;
-
-            const formData = {
-                petName: document.getElementById('form-pet-name').value,
-                petType: document.getElementById('form-pet-type').value,
-                breed: document.getElementById('form-pet-breed').value || '-',
-                ownerName: document.getElementById('form-owner-name').value,
-                ownerPhone: document.getElementById('form-owner-phone').value,
-                area: document.getElementById('form-area').value,
-                vaccineName: document.getElementById('form-vaccine-name').value || 'ไม่มีข้อมูล',
-                lastDate: document.getElementById('form-last-date').value || '-',
-                nextDate: document.getElementById('form-next-date').value || '-',
-                photoUrl: appState.currentPhotoBase64 || ''
-            };
-
-            try {
-                if (appState.sourceMode === 'real' && appState.webAppUrl) {
-                    await fetch(appState.webAppUrl, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(formData)
-                    });
-                    alert('บันทึกข้อมูลเข้า Google Sheet เรียบร้อยแล้ว!');
-                    closePetModal();
-                    fetchData();
-                } else {
-                    const newRow = [
-                        formData.petName,
-                        formData.petType,
-                        formData.breed,
-                        formData.ownerName,
-                        formData.ownerPhone,
-                        formData.area,
-                        formData.vaccineName,
-                        formData.lastDate,
-                        formData.nextDate,
-                        formData.photoUrl
-                    ];
-                    
-                    if (appState.sourceMode === 'real') {
-                        alert('เพิ่มข้อมูลจำลองในหน้าเว็บสำเร็จ (หากต้องการบันทึกเข้า Google Sheet จริง กรุณาใส่ Web App URL ในเมนูตั้งค่า)');
-                    } else {
-                        alert('บันทึกข้อมูลจำลองเรียบร้อย!');
-                    }
-                    
-                    MOCK_PETS.unshift(newRow);
-                    closePetModal();
-                    fetchData();
-                }
-            } catch (err) {
-                console.error(err);
-                alert(`เกิดข้อผิดพลาดในการบันทึก: ${err.message}`);
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> <span>บันทึกข้อมูล</span>`;
+                if (placeholder) placeholder.classList.remove('hidden');
             }
         }
 
-        // --- Config Modal & Settings ---
-        function openConfigModal() {
-            document.getElementById('config-modal').classList.remove('hidden');
-        }
+        // RENDER PET CARDS
+        function renderPetGrid() {
+            const grid = document.getElementById('petGrid');
+            const noResults = document.getElementById('noResults');
+            const searchVal = document.getElementById('searchInput').value.toLowerCase().trim();
+            const villageVal = document.getElementById('villageFilter').value;
+            const statusVal = document.getElementById('statusFilter').value;
 
-        function closeConfigModal() {
-            document.getElementById('config-modal').classList.add('hidden');
-        }
+            grid.innerHTML = '';
 
-        function selectSourceMode(mode) {
-            appState.sourceMode = mode;
-            updateConfigUI();
-        }
+            let filtered = pets.filter(p => {
+                // Filter by species
+                if (selectedSpecies !== 'all' && p.species !== selectedSpecies) return false;
 
-        function updateConfigUI() {
-            const optMock = document.getElementById('opt-mock');
-            const optReal = document.getElementById('opt-real');
-            const realInputs = document.getElementById('real-sheet-inputs');
+                // Filter by owner portal if logged in
+                if (loggedOwnerPhone && p.phone !== loggedOwnerPhone) return false;
 
-            const badge = document.getElementById('current-mode-badge');
-            const desc = document.getElementById('data-source-desc');
-            const ping = document.getElementById('status-ping');
-            const dot = document.getElementById('status-dot');
+                // Filter by search text
+                const matchSearch = p.name.toLowerCase().includes(searchVal) || 
+                                    p.owner.toLowerCase().includes(searchVal) || 
+                                    p.phone.includes(searchVal) ||
+                                    p.id.toLowerCase().includes(searchVal);
+                if (!matchSearch) return false;
 
-            if (appState.sourceMode === 'mock') {
-                optMock.className = "p-3.5 rounded-2xl border-2 border-peach-500 bg-peach-50 text-peach-600 text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-sm";
-                optReal.className = "p-3.5 rounded-2xl border-2 border-slate-200 bg-slate-50 text-slate-500 text-xs font-bold flex items-center justify-center gap-2 transition-all";
-                realInputs.classList.add('opacity-50', 'pointer-events-none');
+                // Filter by village
+                if (villageVal && p.village !== villageVal) return false;
 
-                badge.textContent = "โหมดข้อมูลตัวอย่าง (Mock Data)";
-                badge.className = "text-xs font-bold uppercase tracking-wider text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200";
-                desc.textContent = "กำลังแสดงข้อมูลการสำรวจในพื้นที่ 16 หมู่บ้าน ตำบลห้วยยาบ";
-                
-                ping.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75";
-                dot.className = "relative inline-flex rounded-full h-3 w-3 bg-amber-500";
-            } else {
-                optReal.className = "p-3.5 rounded-2xl border-2 border-tealish-500 bg-tealish-50 text-tealish-700 text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-sm";
-                optMock.className = "p-3.5 rounded-2xl border-2 border-slate-200 bg-slate-50 text-slate-500 text-xs font-bold flex items-center justify-center gap-2 transition-all";
-                realInputs.classList.remove('opacity-50', 'pointer-events-none');
-
-                badge.textContent = "เชื่อมต่อ Google Sheet จริง (Live)";
-                badge.className = "text-xs font-bold uppercase tracking-wider text-tealish-700 bg-tealish-50 px-2 py-0.5 rounded-md border border-tealish-200";
-                desc.textContent = `เชื่อมต่อ Sheet ID: ${appState.sheetId || '(ยังไม่ได้ระบุ)'}`;
-                
-                ping.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-tealish-400 opacity-75";
-                dot.className = "relative inline-flex rounded-full h-3 w-3 bg-tealish-500";
-            }
-        }
-
-        function saveConfigAndFetch() {
-            if (appState.sourceMode === 'real') {
-                const sheetId = document.getElementById('input-sheet-id').value.trim();
-                const sheetName = document.getElementById('input-sheet-name').value.trim() || 'Sheet1';
-                const webAppUrl = document.getElementById('input-webapp-url').value.trim();
-
-                if (!sheetId) {
-                    alert('กรุณากรอก Google Sheet ID');
-                    return;
+                // Filter by status
+                if (statusVal) {
+                    const st = getVaccineStatus(p.lastVaccine);
+                    if (st.status !== statusVal) return false;
                 }
 
-                appState.sheetId = sheetId;
-                appState.sheetName = sheetName;
-                appState.webAppUrl = webAppUrl;
+                return true;
+            });
 
-                localStorage.setItem('pet_sheet_id', sheetId);
-                localStorage.setItem('pet_sheet_name', sheetName);
-                localStorage.setItem('pet_webapp_url', webAppUrl);
-                localStorage.setItem('pet_source_mode', 'real');
+            document.getElementById('petCountBadge').innerText = `${filtered.length} ตัว`;
+
+            if (filtered.length === 0) {
+                noResults.classList.remove('hidden');
+                return;
             } else {
-                localStorage.setItem('pet_source_mode', 'mock');
+                noResults.classList.add('hidden');
             }
 
-            closeConfigModal();
-            updateConfigUI();
-            fetchData();
-        }
+            filtered.forEach(p => {
+                const vacInfo = getVaccineStatus(p.lastVaccine);
+                const speciesIcon = p.species === 'dog' ? '<i class="fa-solid fa-dog text-amber-500"></i>' : '<i class="fa-solid fa-cat text-teal-500"></i>';
+                const defaultImg = p.species === 'dog' ? DEFAULT_DOG_AVATAR : DEFAULT_CAT_AVATAR;
+                const petImage = p.imageUrl || defaultImg;
 
-        function copyAppsScriptCode() {
-            const code = document.getElementById('apps-script-code').innerText;
-            navigator.clipboard.writeText(code).then(() => {
-                alert('คัดลอกโค้ด Google Apps Script เรียบร้อยแล้ว!');
-            }).catch(() => {
-                document.execCommand('copy');
-                alert('คัดลอกโค้ดเรียบร้อย!');
+                // OWNER OR ADMIN CAN EDIT/DELETE
+                const isOwnerOfThisPet = loggedOwnerPhone && p.phone === loggedOwnerPhone;
+                const canManage = isAdminLoggedIn || isOwnerOfThisPet;
+
+                const cardHtml = `
+                    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition p-4 sm:p-5 flex flex-col justify-between relative overflow-hidden group">
+                        
+                        <div class="relative z-10">
+                            <!-- Top Info & ID -->
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="text-[11px] font-mono font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-lg">${p.id}</span>
+                                <span class="text-xs px-2.5 py-0.5 rounded-full font-medium border ${vacInfo.bgClass} ${vacInfo.textClass}">
+                                    ${vacInfo.label}
+                                </span>
+                            </div>
+
+                            <!-- Pet Header with PHOTO -->
+                            <div class="flex items-center space-x-3 mb-4">
+                                <div class="w-16 h-16 rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 flex-shrink-0 shadow-sm">
+                                    <img src="${petImage}" alt="${p.name}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='${defaultImg}';">
+                                </div>
+                                <div class="overflow-hidden">
+                                    <div class="flex items-center gap-1.5">
+                                        <h4 class="font-bold text-slate-800 text-base leading-tight truncate">${p.name}</h4>
+                                        <span class="text-xs">${speciesIcon}</span>
+                                    </div>
+                                    <p class="text-xs text-slate-400 truncate">${p.breed || 'ไม่ระบุพันธุ์'} • เพศ${p.gender || 'ไม่ระบุ'}</p>
+                                </div>
+                            </div>
+
+                            <!-- Details -->
+                            <div class="space-y-1.5 text-xs text-slate-600 bg-slate-50/80 p-3 rounded-2xl border border-slate-100/80 mb-4">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-solid fa-user text-slate-400 w-4"></i>
+                                    <span class="font-medium text-slate-700 truncate">${p.owner}</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-solid fa-phone text-slate-400 w-4"></i>
+                                    <span>${p.phone}</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-solid fa-location-dot text-slate-400 w-4"></i>
+                                    <span class="truncate">${p.village}</span>
+                                </div>
+                                <div class="flex items-center gap-2 pt-1 border-t border-slate-200/60">
+                                    <i class="fa-solid fa-syringe text-slate-400 w-4"></i>
+                                    <span>วัคซีนล่าสุด: <strong>${p.lastVaccine || 'ยังไม่มีประวัติ'}</strong></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="flex items-center gap-2 relative z-10 pt-2 border-t border-slate-100">
+                            <button onclick="openDigitalIdCard('${p.id}')" class="flex-1 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-xs font-semibold rounded-xl transition shadow-sm flex items-center justify-center gap-1">
+                                <i class="fa-solid fa-qrcode"></i> บัตร QR
+                            </button>
+                            
+                            ${canManage ? `
+                                <button onclick="openEditPetModal('${p.id}')" class="p-2 bg-slate-100 hover:bg-amber-100 text-slate-600 hover:text-amber-700 rounded-xl transition" title="แก้ไขข้อมูล">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </button>
+                                <button onclick="deletePet('${p.id}')" class="p-2 bg-slate-100 hover:bg-red-100 text-slate-600 hover:text-red-600 rounded-xl transition" title="ลบข้อมูล">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+                grid.innerHTML += cardHtml;
             });
         }
 
-        function showLoading(isLoading) {
-            const spinner = document.getElementById('loading-spinner');
-            if (isLoading) {
-                spinner.classList.remove('hidden');
-            } else {
-                spinner.classList.add('hidden');
+        // UPDATE STATS & WIDGETS
+        function updateWidgetsAndStats() {
+            let total = pets.length;
+            let upToDate = 0;
+            let dueSoon = 0;
+            let overdue = 0;
+
+            pets.forEach(p => {
+                const st = getVaccineStatus(p.lastVaccine);
+                if (st.status === 'up-to-date') upToDate++;
+                else if (st.status === 'due-soon') dueSoon++;
+                else overdue++;
+            });
+
+            document.getElementById('widgetTotalPets').innerText = total;
+            document.getElementById('widgetUpToDate').innerText = upToDate;
+            document.getElementById('widgetDueSoon').innerText = dueSoon;
+            document.getElementById('widgetOverdue').innerText = overdue;
+
+            // Render Village Stats Table
+            const tbody = document.getElementById('villageStatsTableBody');
+            tbody.innerHTML = '';
+
+            VILLAGES.forEach(v => {
+                const vPets = pets.filter(p => p.village === v);
+                const dogs = vPets.filter(p => p.species === 'dog').length;
+                const cats = vPets.filter(p => p.species === 'cat').length;
+                const totalV = vPets.length;
+                const vaccinated = vPets.filter(p => p.lastVaccine && getVaccineStatus(p.lastVaccine).status !== 'overdue').length;
+                const pct = totalV > 0 ? Math.round((vaccinated / totalV) * 100) : 0;
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-2.5 font-medium text-slate-700">${v}</td>
+                        <td class="p-2.5 text-center">${dogs}</td>
+                        <td class="p-2.5 text-center">${cats}</td>
+                        <td class="p-2.5 text-center font-bold text-slate-800">${totalV}</td>
+                        <td class="p-2.5 text-center text-emerald-600 font-semibold">${vaccinated}</td>
+                        <td class="p-2.5 text-center">
+                            <span class="px-2 py-0.5 rounded-full text-[11px] font-bold ${pct >= 80 ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">
+                                ${pct}%
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // FILTER FUNCTIONS
+        function filterPets() {
+            renderPetGrid();
+        }
+
+        function setSpeciesFilter(species) {
+            selectedSpecies = species;
+            ['all', 'dog', 'cat'].forEach(s => {
+                const btn = document.getElementById(`species-${s}`);
+                if (s === species) {
+                    btn.className = "flex-1 py-1 text-xs font-semibold rounded-lg bg-white shadow-sm text-slate-700";
+                } else {
+                    btn.className = "flex-1 py-1 text-xs font-semibold rounded-lg text-slate-500 hover:text-slate-700";
+                }
+            });
+            renderPetGrid();
+        }
+
+        // ADMIN LOGIN / LOGOUT
+        function checkAdminSession() {
+            if (sessionStorage.getItem('huaiyap_admin') === 'true') {
+                isAdminLoggedIn = true;
+                document.getElementById('adminActiveBanner').classList.remove('hidden');
+                document.getElementById('nav-admin-btn').classList.add('bg-slate-900', 'text-amber-400');
             }
+        }
+
+        function openAdminLoginModal() {
+            openModal('adminLoginModal');
+        }
+
+        function handleAdminLogin(e) {
+            e.preventDefault();
+            const pin = document.getElementById('adminPinInput').value;
+            if (pin === '1234') {
+                isAdminLoggedIn = true;
+                sessionStorage.setItem('huaiyap_admin', 'true');
+                document.getElementById('adminActiveBanner').classList.remove('hidden');
+                closeModal('adminLoginModal');
+                renderPetGrid();
+                showToast('เข้าสู่ระบบแอดมินเจ้าหน้าที่ อบต.ห้วยยาบ สำเร็จ');
+            } else {
+                showToast('รหัส PIN ไม่ถูกต้อง (Default PIN คือ 1234)');
+            }
+        }
+
+        function logoutAdmin() {
+            isAdminLoggedIn = false;
+            sessionStorage.removeItem('huaiyap_admin');
+            document.getElementById('adminActiveBanner').classList.add('hidden');
+            renderPetGrid();
+            showToast('ออกจากระบบแอดมินแล้ว');
+        }
+
+        // OWNER LOGIN / LOGOUT
+        function handleOwnerLogin(e) {
+            e.preventDefault();
+            const phone = document.getElementById('ownerPhoneInput').value.trim();
+            const matched = pets.filter(p => p.phone === phone);
+
+            if (matched.length > 0) {
+                loggedOwnerPhone = phone;
+                document.getElementById('ownerWelcomeName').innerText = `ยินดีต้อนรับ คุณ${matched[0].owner}`;
+                document.getElementById('ownerWelcomePhone').innerText = `เบอร์โทรศัพท์: ${phone}`;
+                document.getElementById('ownerLoggedBanner').classList.remove('hidden');
+                closeModal('ownerLoginModal');
+                renderPetGrid();
+                showToast(`เข้าสู่ระบบเจ้าของสัตว์เลี้ยงเรียบร้อยแล้ว (${matched.length} รายการ)`);
+            } else {
+                showToast('ไม่พบข้อมูลสัตว์เลี้ยงที่ลงทะเบียนด้วยเบอร์โทรศัพท์นี้');
+            }
+        }
+
+        function logoutOwner() {
+            loggedOwnerPhone = null;
+            document.getElementById('ownerLoggedBanner').classList.add('hidden');
+            renderPetGrid();
+            showToast('ออกจากระบบเจ้าของเรียบร้อยแล้ว');
+        }
+
+        function resetToHome() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('villageFilter').value = '';
+            document.getElementById('statusFilter').value = '';
+            setSpeciesFilter('all');
+        }
+
+        // REGISTER NEW PET
+        function handlePetRegistration(e) {
+            e.preventDefault();
+            const species = document.getElementById('regSpecies').value;
+            const urlInput = document.getElementById('regImageUrl').value.trim();
+            const defaultAvatar = species === 'dog' ? DEFAULT_DOG_AVATAR : DEFAULT_CAT_AVATAR;
+
+            // Final image logic: Base64 > Custom URL > Default Avatar
+            const finalImage = currentRegImageBase64 || urlInput || defaultAvatar;
+
+            const newPet = {
+                id: `PET-${1001 + pets.length}`,
+                name: document.getElementById('regPetName').value.trim(),
+                species: species,
+                breed: document.getElementById('regBreed').value.trim(),
+                gender: document.getElementById('regGender').value,
+                owner: document.getElementById('regOwnerName').value.trim(),
+                phone: document.getElementById('regOwnerPhone').value.trim(),
+                village: document.getElementById('regVillage').value,
+                lastVaccine: document.getElementById('regLastVaccine').value,
+                imageUrl: finalImage
+            };
+
+            pets.unshift(newPet);
+            savePetsToLocalStorage();
+            updateWidgetsAndStats();
+            renderPetGrid();
+            closeModal('registerModal');
+            
+            // Reset reg form preview & inputs
+            currentRegImageBase64 = null;
+            document.getElementById('regImageFile').value = '';
+            document.getElementById('regImageUrl').value = '';
+            updateImagePreview('reg', '');
+
+            showToast(`ลงทะเบียน ${newPet.name} เรียบร้อยแล้ว!`);
+        }
+
+        // EDIT PET (ADMIN OR OWNER)
+        function openEditPetModal(id) {
+            const p = pets.find(item => item.id === id);
+            if (!p) return;
+
+            document.getElementById('editPetId').value = p.id;
+            document.getElementById('editPetIdBadge').innerText = `ID: ${p.id}`;
+            document.getElementById('editPetName').value = p.name;
+            document.getElementById('editSpecies').value = p.species;
+            document.getElementById('editBreed').value = p.breed || '';
+            document.getElementById('editGender').value = p.gender || 'ผู้';
+            document.getElementById('editOwnerName').value = p.owner;
+            document.getElementById('editOwnerPhone').value = p.phone;
+            document.getElementById('editVillage').value = p.village;
+            document.getElementById('editLastVaccine').value = p.lastVaccine || '';
+
+            // Image Edit Init
+            currentEditImageBase64 = null;
+            document.getElementById('editImageFile').value = '';
+            
+            if (p.imageUrl && !p.imageUrl.startsWith('data:image')) {
+                document.getElementById('editImageUrl').value = p.imageUrl;
+            } else {
+                document.getElementById('editImageUrl').value = '';
+            }
+
+            const defaultAvatar = p.species === 'dog' ? DEFAULT_DOG_AVATAR : DEFAULT_CAT_AVATAR;
+            updateImagePreview('edit', p.imageUrl || defaultAvatar);
+
+            openModal('editPetModal');
+        }
+
+        function handleSavePetEdit(e) {
+            e.preventDefault();
+            const id = document.getElementById('editPetId').value;
+            const index = pets.findIndex(p => p.id === id);
+
+            if (index !== -1) {
+                const species = document.getElementById('editSpecies').value;
+                const urlInput = document.getElementById('editImageUrl').value.trim();
+                const defaultAvatar = species === 'dog' ? DEFAULT_DOG_AVATAR : DEFAULT_CAT_AVATAR;
+
+                // Determine Image Strategy
+                let finalImage = pets[index].imageUrl || defaultAvatar;
+                if (currentEditImageBase64) {
+                    finalImage = currentEditImageBase64;
+                } else if (urlInput) {
+                    finalImage = urlInput;
+                }
+
+                pets[index].name = document.getElementById('editPetName').value.trim();
+                pets[index].species = species;
+                pets[index].breed = document.getElementById('editBreed').value.trim();
+                pets[index].gender = document.getElementById('editGender').value;
+                pets[index].owner = document.getElementById('editOwnerName').value.trim();
+                pets[index].phone = document.getElementById('editOwnerPhone').value.trim();
+                pets[index].village = document.getElementById('editVillage').value;
+                pets[index].lastVaccine = document.getElementById('editLastVaccine').value;
+                pets[index].imageUrl = finalImage;
+
+                savePetsToLocalStorage();
+                updateWidgetsAndStats();
+                renderPetGrid();
+                closeModal('editPetModal');
+                showToast('บันทึกการแก้ไขข้อมูลเรียบร้อยแล้ว');
+            }
+        }
+
+        function deletePet(id) {
+            showConfirm(`คุณต้องการลบข้อมูลสัตว์เลี้ยงรหัส ${id} ใช่หรือไม่?`, () => {
+                pets = pets.filter(p => p.id !== id);
+                savePetsToLocalStorage();
+                updateWidgetsAndStats();
+                renderPetGrid();
+                showToast(`ลบข้อมูล ${id} เรียบร้อยแล้ว`);
+            });
+        }
+
+        // DIGITAL ID & QR CODE MODAL
+        function openDigitalIdCard(id) {
+            const p = pets.find(item => item.id === id);
+            if (!p) return;
+
+            const vacInfo = getVaccineStatus(p.lastVaccine);
+            const container = document.getElementById('digitalCardBody');
+            const defaultImg = p.species === 'dog' ? DEFAULT_DOG_AVATAR : DEFAULT_CAT_AVATAR;
+            const petImage = p.imageUrl || defaultImg;
+
+            container.innerHTML = `
+                <div class="flex items-center justify-center gap-4 mb-3">
+                    <div class="w-20 h-20 rounded-2xl overflow-hidden border-2 border-amber-400 shadow-md bg-slate-100 flex-shrink-0">
+                        <img src="${petImage}" alt="${p.name}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='${defaultImg}';">
+                    </div>
+                    <div class="inline-block p-1.5 bg-slate-50 rounded-2xl border border-slate-200">
+                        <div id="qrcodeCanvas" class="flex justify-center p-1 bg-white rounded-xl shadow-inner"></div>
+                    </div>
+                </div>
+
+                <div class="text-[11px] font-mono text-slate-400 font-bold">${p.id}</div>
+                <h3 class="text-xl font-extrabold text-slate-800">${p.name}</h3>
+                <p class="text-xs text-slate-500">${p.species === 'dog' ? '🐶 สุนัข' : '🐱 แมว'} • สายพันธุ์ ${p.breed || 'ไม่ระบุ'} (${p.gender})</p>
+
+                <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100 text-left text-xs space-y-1.5 mt-3">
+                    <div><span class="text-slate-400">เจ้าของ:</span> <strong class="text-slate-700">${p.owner}</strong></div>
+                    <div><span class="text-slate-400">โทร:</span> <strong class="text-slate-700">${p.phone}</strong></div>
+                    <div><span class="text-slate-400">ที่อยู่:</span> <strong class="text-slate-700">${p.village}</strong></div>
+                    <div class="pt-1 border-t border-slate-200/80"><span class="text-slate-400">วัคซีนล่าสุด:</span> <strong class="text-slate-700">${p.lastVaccine || 'ไม่มีประวัติ'}</strong></div>
+                </div>
+
+                <div class="p-2.5 rounded-xl text-xs font-semibold border ${vacInfo.bgClass} ${vacInfo.textClass} mt-3">
+                    <i class="fa-solid fa-shield-halved mr-1"></i> สถานะวัคซีน: ${vacInfo.label}
+                </div>
+            `;
+
+            openModal('digitalIdModal');
+
+            // Generate QR Code
+            setTimeout(() => {
+                document.getElementById('qrcodeCanvas').innerHTML = '';
+                new QRCode(document.getElementById('qrcodeCanvas'), {
+                    text: `https://huaiyappetcare.org/verify?id=${p.id}`,
+                    width: 100,
+                    height: 100,
+                    colorDark: "#0f172a",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+            }, 100);
+        }
+
+        function downloadQRCode() {
+            const canvas = document.querySelector('#qrcodeCanvas canvas');
+            if (canvas) {
+                const link = document.createElement('a');
+                link.download = 'HuaiyapPet-QR.png';
+                link.href = canvas.toDataURL();
+                link.click();
+            } else {
+                showToast('ไม่สามารถดาวน์โหลด QR Code ได้');
+            }
+        }
+
+        // MODAL HELPERS
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function toggleMobileMenu() {
+            document.getElementById('mobileMenu').classList.toggle('hidden');
+        }
+
+        // CUSTOM TOAST & CONFIRM DIALOGS
+        function showToast(message) {
+            let toast = document.getElementById('customToast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'customToast';
+                toast.className = 'fixed bottom-5 right-5 z-50 bg-slate-900 text-white text-xs px-4 py-3 rounded-2xl shadow-xl flex items-center gap-2 transition-all duration-300 opacity-0 transform translate-y-2 pointer-events-none';
+                toast.innerHTML = `<i class="fa-solid fa-circle-info text-amber-400"></i><span id="toastMsg"></span>`;
+                document.body.appendChild(toast);
+            }
+            document.getElementById('toastMsg').innerText = message;
+            toast.classList.remove('opacity-0', 'translate-y-2', 'pointer-events-none');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2', 'pointer-events-none');
+            }, 3000);
+        }
+
+        function showConfirm(message, onConfirm) {
+            let overlay = document.getElementById('confirmModalOverlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'confirmModalOverlay';
+                overlay.className = 'fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4';
+                overlay.innerHTML = `
+                    <div class="bg-white rounded-3xl max-w-sm w-full shadow-2xl p-6 text-center space-y-4">
+                        <div class="w-12 h-12 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto text-xl">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                        <p id="confirmMsg" class="text-xs text-slate-700 font-medium"></p>
+                        <div class="flex gap-2 pt-2">
+                            <button id="confirmYesBtn" class="flex-1 py-2 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl text-xs transition">ยืนยัน</button>
+                            <button id="confirmNoBtn" class="flex-1 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-xl text-xs transition">ยกเลิก</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+            } else {
+                overlay.classList.remove('hidden');
+            }
+
+            document.getElementById('confirmMsg').innerText = message;
+            
+            const yesBtn = document.getElementById('confirmYesBtn');
+            const noBtn = document.getElementById('confirmNoBtn');
+
+            const cleanup = () => {
+                overlay.classList.add('hidden');
+                yesBtn.onclick = null;
+                noBtn.onclick = null;
+            };
+
+            yesBtn.onclick = () => {
+                cleanup();
+                if (onConfirm) onConfirm();
+            };
+            noBtn.onclick = () => {
+                cleanup();
+            };
         }
     </script>
 </body>
